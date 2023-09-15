@@ -14,8 +14,12 @@ Pain(T) 2.0 Release notes
 >
 >### News
 >
-> This is an expansion on the last 2.1 build
->
+> This is an expansion on the last 2.1 
+> build. I have finally finished getting 
+> SwingFXUtils to works, which has been a real bit of work.
+> I've had to completely remove my IDE and reinstall, along
+> with reworking my Javafx libraries. 
+> 
 > ### Overview
 >	
 >
