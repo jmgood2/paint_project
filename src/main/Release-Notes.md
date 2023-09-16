@@ -1,11 +1,9 @@
-GitHub:
+GitHub: https://github.com/jmgood2/paint_project.git
+
 Video:
 
 Pain(T) 2.0 Release notes
-GitHub:
-Video:
 
-Pain(T) 2 Release notes
 
 # 9/15/2023 Release Notes (Alpha Build 2.1.1)
 > ---   
