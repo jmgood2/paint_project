@@ -1,19 +1,19 @@
 package com.example.paint_project;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
+import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -27,16 +27,14 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-
-import javafx.embed.swing.SwingFXUtils;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.RenderedImage;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 
 
@@ -61,15 +59,15 @@ public class paint_2 extends Application {
         openI.setAccelerator(KeyCombination.keyCombination("Shortcut+Shift+N"));
         MenuItem saveI = new MenuItem("Save Image");
         saveI.setAccelerator(KeyCombination.keyCombination("Shortcut+S"));
-        MenuItem saveAsI = new MenuItem("Save Image As");
-        saveAsI.setAccelerator(KeyCombination.keyCombination("Shortcut+Shift+S"));
+        MenuItem saveIAs = new MenuItem("Save Image As");
+        saveIAs.setAccelerator(KeyCombination.keyCombination("Shortcut+Shift+S"));
         MenuItem closeI = new MenuItem("Close Image");
         closeI.setAccelerator(KeyCombination.keyCombination("F1"));
         MenuItem exit = new MenuItem("Close");
         exit.setAccelerator(KeyCombination.keyCombination("F4"));
         menuF.getItems().add(openI);
         menuF.getItems().add(saveI);
-        menuF.getItems().add(saveAsI);
+        menuF.getItems().add(saveIAs);
         menuF.getItems().add(closeI);
         menuF.getItems().add(exit);
 
@@ -193,17 +191,15 @@ public class paint_2 extends Application {
 
 
 
-        /**************************
-         * SCENE creation and update
-         ****************** ***/
+
+         //SCENE creation and update
+
 
         stage.setScene(baseScene);
 
         stage.show();
 
-        /**************************
-         * Menu Item Actions
-         ****************** ***/
+        //Menu Item Actions
 
         //
         // MENU Items
@@ -235,7 +231,7 @@ public class paint_2 extends Application {
                     canvas.setHeight(image.getHeight());
                     canvas.setWidth(image.getWidth());
 
-
+                    // Clear canvas
                     FXC.clearRect(
                             0,0,
                             canvas.getWidth(),
@@ -247,6 +243,8 @@ public class paint_2 extends Application {
                 }
         );
 
+
+        // Save Image
         saveI.setOnAction(
                 aE -> {
                     File iFile = iHandler.getOpenImage();
@@ -255,14 +253,14 @@ public class paint_2 extends Application {
                             iFile.getName().lastIndexOf('.') + 1);
                     System.out.println("File extension of " + iFile.getAbsolutePath() + " is " + fType);
                     if (iFile == null){
-                        File file = saveImageAs(stage, new File ("Images"));
+                        File file = saveImage(stage, new File ("Images"));
 
                         System.out.println("RUNNING SAVE IMAGE");
-                        saveImageAs(stage, file);
+                        saveImageAs(canvas, file);
                     }
                     else {
                         System.out.println("SAVING...");
-                        saveImage(canvas, iFile);
+                        saveImageAs(canvas, iFile);
 
 
                     }
@@ -270,6 +268,28 @@ public class paint_2 extends Application {
 
                 }
         );
+
+
+
+        // SAVE image AS
+        saveIAs.setOnAction(
+                aE -> {
+
+                    File file = saveImage(stage, iHandler.openImage);
+                    if (file == null) {
+                        try {
+                            Files.createFile(file.toPath());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    System.out.println("RUNNING SAVE IMAGE");
+                    saveImageAs(canvas, file);
+                    System.out.println("RUNNING SAVE IMAGE AS");
+
+
+
+                });
 
         // CLOSE image
         closeI.setOnAction(
@@ -293,7 +313,7 @@ public class paint_2 extends Application {
         // OPEN release notes
         notes.setOnAction(
                 aE -> {
-                    File file = new File("src/main/resources/Release-Notes.md");
+                    File file = new File("src/main/Release-Notes.md");
                     if (file.exists()){
                         System.out.println("file exists");
                         Desktop desktop = Desktop.getDesktop();
@@ -499,6 +519,9 @@ public class paint_2 extends Application {
     public static File openImage(Stage stage){
         FileChooser f = new FileChooser();
         f.setTitle("Open Image");
+
+        File init = new File("src/main/images");
+        f.setInitialDirectory(init);
         f.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("All Images", "*.*"),
                 new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
@@ -513,10 +536,12 @@ public class paint_2 extends Application {
     /* saveImage
      * Launches a FileChooser explorer for saving an Image
      */
-    public static File saveImageAs(Stage stage, File initial){
+    public static File saveImage(Stage stage, File initial){
         FileChooser fChooser = new FileChooser();
         fChooser.setTitle("Save Image");
-        fChooser.setInitialDirectory(initial);
+        //fChooser.setInitialDirectory(initial);
+        File init = new File("src/main/images");
+        fChooser.setInitialDirectory(init);
         fChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("All Images", "*.*"),
                 new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
@@ -524,11 +549,16 @@ public class paint_2 extends Application {
                 new FileChooser.ExtensionFilter("BMP", "*.bmp"),
                 new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
         );
-        return fChooser.showSaveDialog(stage);
+
+        if (fChooser.showSaveDialog(stage) != null) return fChooser.showSaveDialog(stage);
+        else {
+            System.out.println("ERROR -- returned file is Null!");
+            return null;
+        }
 
     }
 
-    public static void saveImage(Canvas canvas, File file){
+    public static void saveImageAs(Canvas canvas, File file){
 
         try{
             System.out.println("SYSTEM Save Image As w/ " + file.getAbsolutePath());
@@ -536,19 +566,34 @@ public class paint_2 extends Application {
                     (int) canvas.getHeight());
             canvas.snapshot(null, wImage);
 
-            RenderedImage rImage = SwingFXUtils.fromFXImage(wImage, null);
+            BufferedImage bImage1 = SwingFXUtils.fromFXImage(wImage, null);
             String ext = file.getPath().substring(file.getPath().lastIndexOf(".") + 1);
 
+            BufferedImage bImage2 = bImage1;
 
-            ImageIO.write(rImage ,
+            if (ext.equals("jpg") || ext.equals("jpeg")){
+                bImage2 = new BufferedImage(
+                    bImage1.getWidth(),
+                    bImage1.getHeight(),
+                    BufferedImage.OPAQUE);
+            }
+            Graphics2D graphics = bImage2.createGraphics();
+            graphics.drawImage(bImage1, 0, 0, null);
+
+            ImageIO.write(bImage2,
                     ext,
                     file);
+            graphics.dispose();
 
 
         } catch (IOException e) {
             e.printStackTrace();
             // Error LOG
             System.out.println("ERROR SAVING \n" + e);
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
+            // Error LOG
+            System.out.println("ERROR SAVING (NULLPOINTER \n" + ex);
         }
 
 
@@ -564,7 +609,7 @@ public class paint_2 extends Application {
         Stage aPop = new Stage();
         aPop.setTitle("About");
 
-        Label aLabel = new Label("Pain(T) Alpha Build 2.1\n9/9/2023\n\nJonathan Good\nCS 250\n");
+        Label aLabel = new Label("Pain(T) Alpha Build 2.1\n9/15/2023\n\nJonathan Good\nCS 250\n");
 
         VBox vB = new VBox(10);
         vB.getChildren().addAll(aLabel);
