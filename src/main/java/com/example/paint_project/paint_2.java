@@ -1,3 +1,10 @@
+/**********************************************
+ * Jonathan Good   ***********************
+ * CS-250         *******************
+ * PainT Project **************
+ * Sprints 1/2  ***********
+ * *******************/
+
 package com.example.paint_project;
 
 import javafx.application.Application;
@@ -12,6 +19,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -35,6 +43,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 
@@ -46,9 +56,16 @@ public class paint_2 extends Application {
         DrawHandler dHandler = new DrawHandler();
         PaletteHandler pHandler = new PaletteHandler();
 
+        // Create PATHs for directories
+        Path workspace = Paths.get("Images");
+        Path workdir = Files.createDirectories(workspace);
+        Path tempDir = Files.createTempDirectory(workspace, "temp");
 
 
+
+        // Create Stage
         stage.setTitle("Paint (t) 2.0");
+        stage.setMaximized(true);
 
         //
         //MENU Bar
@@ -74,9 +91,8 @@ public class paint_2 extends Application {
         //
         // Edit
         Menu editM = new Menu("Edit");
-        MenuItem m = new MenuItem("Coming Soon");
-        m.setDisable(true);
-        editM.getItems().add(m);
+        MenuItem undo = new MenuItem("Undo");
+        editM.getItems().add(undo);
 
         //
         // Help
@@ -108,12 +124,20 @@ public class paint_2 extends Application {
 
         buttonB.getButtons().addAll(freeDraw, lineDraw);
 
+        buttonB.setPrefHeight(30);
+        BorderPane.setAlignment(buttonB, Pos.BOTTOM_CENTER);
+
+
         // COLOR Palette
         VBox vB1 = new VBox(5);
         vB1.setAlignment(Pos.CENTER);
         vB1.setPadding(new Insets(10));
-        for (int i = 0; i < 8; i++){
-            vB1.getChildren().add(pHandler.getRect(i));
+        for (int i = 0; i < 8; i = i+2){
+            //vB1.getChildren().add(pHandler.getRect(i));
+            // Add rows of 2 colors x 4
+            vB1.getChildren().add(new HBox(
+                    pHandler.getRect(i),
+                    pHandler.getRect(i+1)));
         }
         vB1.getChildren().add(pHandler.getCurrentColorRect());
 
@@ -151,11 +175,18 @@ public class paint_2 extends Application {
         // SCENE Setup
         BorderPane borderRoot = new BorderPane();
         Scene baseScene = new Scene(borderRoot,
-                Screen.getPrimary().getVisualBounds().getWidth() - 200,
-                Screen.getPrimary().getVisualBounds().getHeight() - 200);
+                Screen.getPrimary().getVisualBounds().getWidth(),
+                Screen.getPrimary().getVisualBounds().getHeight());
 
         // CANVAS Setup
-        Canvas canvas = new Canvas(baseScene.getWidth(), baseScene.getHeight());
+        double canvasH = 500;
+        double canvasW = 500;
+
+        Canvas canvas = new Canvas();
+
+        canvas.setHeight(canvasH);
+        canvas.setWidth(canvasW);
+
         GraphicsContext FXC = canvas.getGraphicsContext2D();
         FXC.setFill(Color.WHITE);
         FXC.fillRect(0,
@@ -163,15 +194,47 @@ public class paint_2 extends Application {
                 canvas.getWidth(),
                 canvas.getHeight());
 
+        // Save initial Image to temp directory
+        File tempImage = new File(String.valueOf(Files.createTempFile(
+                tempDir,
+                null,
+                ".jpg")));
 
-        Group group1 = new Group(canvas);
-        group1.setVisible(true);
+        newTempFiles(canvas, tempDir, tempImage, iHandler);
+
+        // ScrollPane containing canvas
+        ScrollPane canvasPane = new ScrollPane(canvas);
+
+        // Scale Scrolling
+        canvasPane.getContent().setOnScroll(scrollEvent ->{
+            double y0 = scrollEvent.getDeltaY();
+            double cHeight = canvasPane.getContent().getBoundsInLocal().getHeight();
+            double sHeight = canvasPane.getHeight();
+            double y1 = 1;
+            if (cHeight != sHeight) y1 = (cHeight - sHeight);
+            double vVal = canvasPane.getVvalue();
+            canvasPane.setVvalue(vVal + -y0/y1);
+
+            double x0 = scrollEvent.getDeltaX();
+            double cWidth = canvasPane.getContent().getBoundsInLocal().getWidth();
+            double sWidth = canvasPane.getWidth();
+            double x1 = 1;
+            if (cWidth != cWidth) x1 = (cWidth - sWidth);
+            double hVal = canvasPane.getHvalue();
+            canvasPane.setHvalue(hVal + -x0/x1);
+
+        });
+
+        canvasPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+
+        BorderPane.setAlignment(canvasPane, Pos.TOP_LEFT);
+        BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
 
         // LAYOUT Setup
         HBox hB1 = new HBox(menuB);
         HBox hB2 = new HBox(buttonB);
         borderRoot.setTop(hB1);
-        borderRoot.setCenter(group1);
+        borderRoot.setCenter(canvasPane);
         borderRoot.setBottom(hB2);
         borderRoot.setLeft(vB1);
 
@@ -208,13 +271,13 @@ public class paint_2 extends Application {
         openI.setOnAction(
                 aE -> {
                     //Open Image
-                    File openF = openImage(stage);
-                    String openFString = openF.getAbsolutePath();
-                    System.out.println("Opening " + openFString + "...");
+                    File openFile = openImage(stage);
+                    String openFilePath = openFile.getAbsolutePath();
+                    System.out.println("DEBUG -- Opening " + openFilePath + "...");
 
                     // Add opened image to Image Handler
                     try {
-                        iHandler.addImage(openF);
+                        iHandler.addImage(openFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -222,7 +285,7 @@ public class paint_2 extends Application {
                     // Pull Image from file
                     Image image = null;
                     try {
-                        image = new Image(new FileInputStream(openFString));
+                        image = new Image(new FileInputStream(openFilePath));
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
@@ -240,6 +303,28 @@ public class paint_2 extends Application {
                     FXC.drawImage(image,
                             0,
                             0);
+
+                    iHandler.setCurrentImageFile(openFile);
+
+                    String extension = openFile.getPath().substring(openFile.getPath().lastIndexOf('.'));
+
+                    File tempFile = null;
+                    try{
+                        tempFile = new File(String.valueOf(
+                                Files.createTempFile(
+                                        tempDir,
+                                        null,
+                                        extension)));
+                    } catch (IOException ex){
+                        ex.printStackTrace();
+                    }
+
+                    try{
+                        assert tempFile != null;
+                        newTempFiles(canvas, tempDir, tempFile, iHandler);
+                    } catch (IOException ex){
+                        ex.printStackTrace();
+                    }
                 }
         );
 
@@ -255,16 +340,16 @@ public class paint_2 extends Application {
                     if (iFile == null){
                         File file = saveImage(stage, new File ("Images"));
 
-                        System.out.println("RUNNING SAVE IMAGE");
+                        System.out.println("DEBUG -- RUNNING SAVE IMAGE");
                         saveImageAs(canvas, file);
                     }
                     else {
-                        System.out.println("SAVING...");
+                        System.out.println("DEBUG -- SAVING...");
                         saveImageAs(canvas, iFile);
 
 
                     }
-                    System.out.println("RUNNING SAVE IMAGE AS");
+                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
 
                 }
         );
@@ -275,7 +360,7 @@ public class paint_2 extends Application {
         saveIAs.setOnAction(
                 aE -> {
 
-                    File file = saveImage(stage, iHandler.openImage);
+                    File file = saveImage(stage, new File(workdir.toString()));
                     if (file == null) {
                         try {
                             Files.createFile(file.toPath());
@@ -283,9 +368,9 @@ public class paint_2 extends Application {
                             e.printStackTrace();
                         }
                     }
-                    System.out.println("RUNNING SAVE IMAGE");
+                    System.out.println("DEBUG -- RUNNING SAVE IMAGE");
                     saveImageAs(canvas, file);
-                    System.out.println("RUNNING SAVE IMAGE AS");
+                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
 
 
 
@@ -300,13 +385,72 @@ public class paint_2 extends Application {
                             0,
                             canvas.getWidth(),
                             canvas.getHeight());
+
+                    try {
+                        clearTempFiles(tempDir);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
+
         );
 
         // EXIT program
         exit.setOnAction(
                 aE -> {
+                    try {
+                        clearTemp(new File(tempDir.toString()), iHandler);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     System.exit(0);
+                }
+        );
+
+        //Undo action - Currently permanent
+        // TODO Make it so we can undo AND redo
+        // TODO Modify Drawing to save edits to temp directory
+        undo.setOnAction(
+                aE -> {
+                    // Make sure we don't accidentally erase the original temp image
+                    if (iHandler.getLatestTempImage() != iHandler.getOriginalImage()) {
+                        try {
+                            Files.delete(iHandler.getLatestTempImage().toPath());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        iHandler.backTempImage();
+                        iHandler.setCurrentImageFile(iHandler.getLatestTempImage());
+
+
+                        Image image = null;
+                        try {
+                            image = iHandler.getImage(iHandler.getLatestTempImage());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Set canvas to old values
+                        canvas.setHeight(image.getHeight());
+                        canvas.setWidth(image.getWidth());
+
+                        FXC.clearRect(
+                                0, 0,
+                                canvas.getWidth(),
+                                canvas.getHeight());
+
+                        FXC.drawImage(image,
+                                0,
+                                0);
+
+                    }
+                    else {
+                        System.out.println("ERROR -- Cannot erase initial temp Image");
+                    }
+
+
+
+
                 }
         );
 
@@ -618,6 +762,41 @@ public class paint_2 extends Application {
         Scene aScene = new Scene (vB, 100, 100);
         aPop.setScene(aScene);
         aPop.showAndWait();
+    }
+
+    public void clearTemp(File tempDir, ImageHandler iH) throws IOException {
+        iH.clearTempList();
+        File[] tempFiles = tempDir.listFiles();
+        if (tempFiles != null) {
+            for (File f: tempFiles){
+                if (f.isDirectory()) clearTemp(f);
+                else Files.delete(Paths.get(f.getPath()));
+            }
+        }
+        Files.delete(Paths.get(tempDir.getPath()));
+    }
+
+    public void clearTemp(File tempDir) throws IOException {
+
+        Files.delete(Paths.get(tempDir.getPath()));
+    }
+
+    public void newTempFiles(Canvas c, Path d, File f, ImageHandler iH) throws IOException {
+        clearTempFiles(d);
+        System.out.println(f.getAbsolutePath());
+        iH.newTempList(f);
+        saveImageAs(c, iH.getOriginalImage());
+    }
+
+    public void clearTempFiles(Path d) throws IOException {
+        File tempDir = new File(d.toString());
+        File[] tempFiles = tempDir.listFiles();
+        if (tempFiles != null) {
+            for (File f: tempFiles){
+                if (f.isDirectory()) clearTempFiles(f.toPath());
+                else Files.delete(Paths.get(f.getPath()));
+            }
+        }
     }
 
 
