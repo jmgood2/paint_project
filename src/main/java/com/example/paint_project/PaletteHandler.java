@@ -143,8 +143,13 @@ public class PaletteHandler {
         return pallete[i];
     }
 
-    public Color getColor(int i){
-        return cMap.get(pallete[i]);
+    public String getColorRGB(){
+
+        return String.format("#%02X%02X%02X",
+                (int) (((Color) currentColor.getFill()).getRed() * 255),
+                (int) (((Color) currentColor.getFill()).getGreen() * 255),
+                (int) (((Color) currentColor.getFill()).getBlue() * 255));
+
     }
 
     // Setters

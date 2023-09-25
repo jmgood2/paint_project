@@ -9,12 +9,16 @@ enum DrawType{
     NONE,
     FREE,
     LINE,
+    SQUARE,
     CIRCLE,
+    RECTANGLE,
+    ELLIPSE,
+    TRIANGLE
 }
 
 // Class for Objects that handle all drawing on the canvas
 public class DrawHandler {
-    private DrawType dType;
+    private DrawType drawType;
 
     Point2D posA;
     boolean firstClick;
@@ -26,7 +30,7 @@ public class DrawHandler {
 
 
     public DrawHandler(){
-        dType = DrawType.NONE;
+        drawType = DrawType.NONE;
         posA = new Point2D(0,0);
         firstClick = true;
         lineWidth = 20;
@@ -49,7 +53,7 @@ public class DrawHandler {
     }
 
     public DrawType getDrawType(){
-        return dType;
+        return drawType;
     }
 
     public Point2D getPosA(){
@@ -74,16 +78,25 @@ public class DrawHandler {
     }
 
     public void setDrawType(DrawType d){
-        dType = d;
+        drawType = d;
     }
 
     public void setDrawType(String s){
         switch (s){
-            case "FREE": dType = DrawType.FREE;
+            case "FREE": drawType = DrawType.FREE;
                 break;
-            case "LINE": dType = DrawType.LINE;
+            case "LINE": drawType = DrawType.LINE;
                 break;
-            default: dType = DrawType.NONE;
+            case "SQUARE": drawType = DrawType.SQUARE;
+            break;
+            case "RECTANGLE": drawType = DrawType.RECTANGLE;
+            break;
+            case "CIRCLE" : drawType = DrawType.CIRCLE;
+            break;
+            case "ELLIPSE" : drawType = DrawType.ELLIPSE;
+            break;
+            case "TRIANGLE" : drawType = DrawType.TRIANGLE;
+            default: drawType = DrawType.NONE;
                 break;
         }
     }

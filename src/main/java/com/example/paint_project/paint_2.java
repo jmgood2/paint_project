@@ -25,10 +25,12 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
@@ -111,23 +113,46 @@ public class paint_2 extends Application {
 
         // Button Menu
         ToggleGroup buttons = new ToggleGroup();
-        ButtonBar buttonB = new ButtonBar();
-        buttonB.setButtonMinWidth(50);
+        //ButtonBar buttonB = new ButtonBar();
+        //buttonB.setButtonMinWidth(50);
 
         // Create buttons
-        ToggleButton freeDraw = new ToggleButton("FREE");
+        ToggleButton freeDraw = new ToggleButton();
+        freeDraw.setGraphic(new Circle());
         freeDraw.setToggleGroup(buttons);
-        ButtonBar.setButtonData(freeDraw, ButtonBar.ButtonData.LEFT);
         ToggleButton lineDraw = new ToggleButton("LINE");
         lineDraw.setToggleGroup(buttons);
-        ButtonBar.setButtonData(lineDraw, ButtonBar.ButtonData.LEFT);
+        ToggleButton shapes = new ToggleButton("Shapes");
+        shapes.setToggleGroup(buttons);
+        ToggleButton colorPicker = new ToggleButton("Color\nPicker");
+        colorPicker.setToggleGroup(buttons);
 
-        buttonB.getButtons().addAll(freeDraw, lineDraw);
+        GridPane buttonGrid = new GridPane();
 
-        buttonB.setPrefHeight(30);
-        BorderPane.setAlignment(buttonB, Pos.BOTTOM_CENTER);
+        buttonGrid.add(freeDraw, 0,0);
+        buttonGrid.add(lineDraw, 0, 1);
+        buttonGrid.add(shapes, 1, 0);
+        buttonGrid.add(colorPicker, 1, 1);
 
 
+        buttonGrid.getColumnConstraints().add(new ColumnConstraints(55));
+        buttonGrid.getColumnConstraints().add(new ColumnConstraints(55));
+        buttonGrid.getRowConstraints().add(new RowConstraints(40));
+        buttonGrid.getRowConstraints().add(new RowConstraints(40));
+
+
+
+
+
+        //ButtonBar.setButtonData(freeDraw, ButtonBar.ButtonData.LEFT);
+        //ButtonBar.setButtonData(lineDraw, ButtonBar.ButtonData.LEFT);
+
+        //buttonB.getButtons().addAll(freeDraw, lineDraw);
+
+        //buttonB.setPrefHeight(30);
+        //BorderPane.setAlignment(buttonB, Pos.BOTTOM_CENTER);
+
+        //
         // COLOR Palette
         VBox vB1 = new VBox(5);
         vB1.setAlignment(Pos.CENTER);
@@ -140,6 +165,10 @@ public class paint_2 extends Application {
                     pHandler.getRect(i+1)));
         }
         vB1.getChildren().add(pHandler.getCurrentColorRect());
+        Label rgbHash = new Label(pHandler.getColorRGB());
+        vB1.getChildren().add(rgbHash);
+
+
 
         // LINE Selection
         Menu pMenu = new Menu("",
@@ -231,12 +260,13 @@ public class paint_2 extends Application {
         BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
 
         // LAYOUT Setup
+        VBox vBRoot = new VBox(buttonGrid, vB1);
         HBox hB1 = new HBox(menuB);
-        HBox hB2 = new HBox(buttonB);
+        //HBox hB2 = new HBox(buttonB);
         borderRoot.setTop(hB1);
         borderRoot.setCenter(canvasPane);
-        borderRoot.setBottom(hB2);
-        borderRoot.setLeft(vB1);
+        //borderRoot.setBottom(hB2);
+        borderRoot.setLeft(vBRoot);
 
 
         // IMAGE View
@@ -336,7 +366,7 @@ public class paint_2 extends Application {
 
                     String fType = iFile.getName().substring(
                             iFile.getName().lastIndexOf('.') + 1);
-                    System.out.println("File extension of " + iFile.getAbsolutePath() + " is " + fType);
+                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
                     if (iFile == null){
                         File file = saveImage(stage, new File ("Images"));
 
@@ -459,7 +489,7 @@ public class paint_2 extends Application {
                 aE -> {
                     File file = new File("src/main/Release-Notes.md");
                     if (file.exists()){
-                        System.out.println("file exists");
+                        System.out.println("DEBUG -- file exists");
                         Desktop desktop = Desktop.getDesktop();
                         try {
                             desktop.open(file);
@@ -495,12 +525,12 @@ public class paint_2 extends Application {
         vB1.addEventHandler(MouseEvent.MOUSE_CLICKED,
                 pE -> {
                     try {
-
                         Rectangle target = (Rectangle) pE.getTarget();
                         dHandler.setCurrentColor((Color) target.getFill());
                         pHandler.setCurrentColor(dHandler.getCurrentColor());
-                    } catch (ClassCastException cE){
-                        cE.printStackTrace();
+                        rgbHash.setText(pHandler.getColorRGB());
+                    } catch (ClassCastException e){
+                        e.printStackTrace();
                     }
 
                 });
@@ -583,9 +613,18 @@ public class paint_2 extends Application {
 
 
                     }
-                    textW.setText(String.valueOf(c));
-                    dHandler.setLineWidth(Double.parseDouble(textW.getText()));
 
+                    textW.setText(String.valueOf(c));
+
+                }
+        );
+
+        textW.setOnKeyPressed(
+                kE -> {
+                    if (kE.getCode() == KeyCode.ENTER){
+
+                        dHandler.setLineWidth(Double.parseDouble(textW.getText()));
+                    }
                 }
         );
 
@@ -594,16 +633,24 @@ public class paint_2 extends Application {
 
         canvas.addEventHandler(MouseEvent.ANY,
                 e -> {
+                    FXC.setFill(pHandler.getCurrentColor());
+                    FXC.setStroke(pHandler.getCurrentColor());
+                    FXC.setLineWidth(dHandler.getLineWidth());
                     switch (dHandler.getDrawType()) {
                         case FREE -> {
-                            System.out.println("FREE");
+                            //System.out.println("FREE");
                             if (e.getEventType() == MouseEvent.MOUSE_DRAGGED) {
                                 if (e.isPrimaryButtonDown()) {
-                                    FXC.setFill(dHandler.getCurrentColor());
+                                    /*FXC.setFill(dHandler.getCurrentColor());
                                     FXC.fillRect(e.getX() - 3,
                                             e.getY() - 3,
                                             5,
-                                            5);
+                                            5);*/
+                                    FXC.lineTo(e.getX(), e.getY());
+                                    FXC.stroke();
+
+
+
                                 } else if (e.isSecondaryButtonDown()) {
 
                                     FXC.clearRect(e.getX() - 3,
@@ -612,6 +659,10 @@ public class paint_2 extends Application {
                                             5);
 
                                 }
+                            } else if (e.getEventType() == MouseEvent.MOUSE_PRESSED){
+                                FXC.beginPath();
+                                FXC.moveTo(e.getX(), e.getY());
+                                FXC.stroke();
                             }
                         }
                         case LINE -> {
