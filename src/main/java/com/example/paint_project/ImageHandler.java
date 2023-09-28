@@ -1,6 +1,7 @@
 package com.example.paint_project;
 
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 
 import java.io.*;
 import java.nio.file.FileSystems;
@@ -188,6 +189,14 @@ public class ImageHandler {
             e.printStackTrace();
         }
         return null;
+    }
+
+    // Get the color of a pixel on the canvas image by
+    // taking a snapshot of the canvas and the mouse coordinates
+    //@params Image snapshot of the canvas, int x and int y positions of the mouse relative to the image
+    // returns the color value at the specified coordinates
+    public Color getPixelColor(Image snapshot, int mouseX, int mouseY){
+        return snapshot.getPixelReader().getColor(mouseX, mouseY);
     }
 
 

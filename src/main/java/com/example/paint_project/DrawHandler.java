@@ -9,11 +9,8 @@ enum DrawType{
     NONE,
     FREE,
     LINE,
-    SQUARE,
-    CIRCLE,
-    RECTANGLE,
-    ELLIPSE,
-    TRIANGLE
+    SHAPE,
+    PICKER
 }
 
 // Class for Objects that handle all drawing on the canvas
@@ -87,15 +84,8 @@ public class DrawHandler {
                 break;
             case "LINE": drawType = DrawType.LINE;
                 break;
-            case "SQUARE": drawType = DrawType.SQUARE;
-            break;
-            case "RECTANGLE": drawType = DrawType.RECTANGLE;
-            break;
-            case "CIRCLE" : drawType = DrawType.CIRCLE;
-            break;
-            case "ELLIPSE" : drawType = DrawType.ELLIPSE;
-            break;
-            case "TRIANGLE" : drawType = DrawType.TRIANGLE;
+            case "SHAPE" : drawType = DrawType.SHAPE;
+                break;
             default: drawType = DrawType.NONE;
                 break;
         }

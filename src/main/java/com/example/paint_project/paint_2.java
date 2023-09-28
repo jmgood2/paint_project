@@ -32,6 +32,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
@@ -117,25 +118,51 @@ public class paint_2 extends Application {
         //buttonB.setButtonMinWidth(50);
 
         // Create buttons
-        ToggleButton freeDraw = new ToggleButton();
-        freeDraw.setGraphic(new Circle());
-        freeDraw.setToggleGroup(buttons);
+        ToggleButton freeDraw = new ToggleButton("FREE");
         ToggleButton lineDraw = new ToggleButton("LINE");
-        lineDraw.setToggleGroup(buttons);
         ToggleButton shapes = new ToggleButton("Shapes");
+        freeDraw.setPrefSize(65, 40);
+        Circle c1 = new Circle();
+        c1.setRadius(4);
+        c1.setFill(Color.BLACK);
+
+        freeDraw.setGraphic(c1);
+        freeDraw.setToggleGroup(buttons);
+        lineDraw.setPrefSize(55, 40);
+        Line l1 = new Line();
+        l1.setStrokeWidth(2);
+        l1.setStartX(0);
+        l1.setStartY(6);
+        l1.setEndX(6);
+        l1.setEndY(0);
+        l1.setStroke(Color.BLACK);
+
+        lineDraw.setGraphic(l1);
+        lineDraw.setToggleGroup(buttons);
+        shapes.setPrefSize(65, 40);
+        Polygon triangle = new Polygon();
+        triangle.getPoints().addAll(
+                0.0, 6.0,
+                3.0, 0.0,
+                6.0, 6.0);
+
+        shapes.setGraphic(triangle);
         shapes.setToggleGroup(buttons);
         ToggleButton colorPicker = new ToggleButton("Color\nPicker");
+        colorPicker.setPrefSize(55, 40);
         colorPicker.setToggleGroup(buttons);
 
         GridPane buttonGrid = new GridPane();
+        buttonGrid.setGridLinesVisible(true);
+        buttonGrid.setPrefSize(50, 50);
 
         buttonGrid.add(freeDraw, 0,0);
-        buttonGrid.add(lineDraw, 0, 1);
-        buttonGrid.add(shapes, 1, 0);
+        buttonGrid.add(lineDraw, 1, 0);
+        buttonGrid.add(shapes, 0, 1);
         buttonGrid.add(colorPicker, 1, 1);
 
 
-        buttonGrid.getColumnConstraints().add(new ColumnConstraints(55));
+        buttonGrid.getColumnConstraints().add(new ColumnConstraints(65));
         buttonGrid.getColumnConstraints().add(new ColumnConstraints(55));
         buttonGrid.getRowConstraints().add(new RowConstraints(40));
         buttonGrid.getRowConstraints().add(new RowConstraints(40));
@@ -143,16 +170,6 @@ public class paint_2 extends Application {
 
 
 
-
-        //ButtonBar.setButtonData(freeDraw, ButtonBar.ButtonData.LEFT);
-        //ButtonBar.setButtonData(lineDraw, ButtonBar.ButtonData.LEFT);
-
-        //buttonB.getButtons().addAll(freeDraw, lineDraw);
-
-        //buttonB.setPrefHeight(30);
-        //BorderPane.setAlignment(buttonB, Pos.BOTTOM_CENTER);
-
-        //
         // COLOR Palette
         VBox vB1 = new VBox(5);
         vB1.setAlignment(Pos.CENTER);
@@ -160,17 +177,16 @@ public class paint_2 extends Application {
         for (int i = 0; i < 8; i = i+2){
             //vB1.getChildren().add(pHandler.getRect(i));
             // Add rows of 2 colors x 4
-            vB1.getChildren().add(new HBox(
-                    pHandler.getRect(i),
-                    pHandler.getRect(i+1)));
+            HBox h = new HBox(pHandler.getRect(i),
+                    pHandler.getRect(i+1));
+            h.setAlignment(Pos.CENTER);
+            vB1.getChildren().add(h);
         }
         vB1.getChildren().add(pHandler.getCurrentColorRect());
         Label rgbHash = new Label(pHandler.getColorRGB());
         vB1.getChildren().add(rgbHash);
 
-
-
-        // LINE Selection
+        // LINE Pane
         Menu pMenu = new Menu("",
                 pHandler.getMenuLine());
         MenuItem thinW = new MenuItem("Thin",
@@ -184,12 +200,58 @@ public class paint_2 extends Application {
         pMenu.getItems().add(thickW);
 
         MenuBar pBar = new MenuBar(pMenu);
-        vB1.getChildren().add(pBar);
+
+        Slider lineWidthSlider = new Slider(5, 50, 5);
+        lineWidthSlider.setShowTickMarks(true);
+        lineWidthSlider.setShowTickLabels(true);
+        lineWidthSlider.setBlockIncrement(1);
+
 
         TextField textW = new TextField(Double.toString(dHandler.getLineWidth()));
         textW.setMinWidth(20);
         textW.setMaxWidth(40);
-        vB1.getChildren().add(textW);
+
+        // Contextual Pane
+
+        // Free Draw Pane
+        VBox freeVBox = new VBox();
+        freeVBox.getChildren().addAll(
+                new Label("Brush Size"),
+                new Label("Brush Shape")
+        );
+
+        // Line Draw Pane
+        VBox lineVBox = new VBox();
+        lineVBox.getChildren().addAll(
+                pBar,
+                lineWidthSlider,
+                textW
+        );
+
+        // Shapes Pane
+        VBox shapesVBox = new VBox();
+        shapesVBox.getChildren().addAll(
+                new Label("Shape Size"),
+                new Label("Shape Shape")
+        );
+
+        // Color Picker Pane
+        VBox pickerVBox = new VBox();
+        int[] picker = new int[2];
+        Rectangle pickerColor = new Rectangle(20, 20);
+        pickerColor.setStroke(Color.BLACK);
+        Label pickerXY = new Label("Coordinates: " + picker[0] + ", " + picker[1]);
+        pickerVBox.getChildren().addAll(
+                pickerXY,
+                new HBox(
+                        new Label("Pixel Color: "),
+                        pickerColor
+                )
+        );
+
+
+
+
 
 
         vB1.setBorder(new Border(new BorderStroke(
@@ -260,7 +322,7 @@ public class paint_2 extends Application {
         BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
 
         // LAYOUT Setup
-        VBox vBRoot = new VBox(buttonGrid, vB1);
+        VBox vBRoot = new VBox(buttonGrid, vB1, freeVBox);
         HBox hB1 = new HBox(menuB);
         //HBox hB2 = new HBox(buttonB);
         borderRoot.setTop(hB1);
@@ -511,11 +573,33 @@ public class paint_2 extends Application {
         //
         // Button Items
         freeDraw.setOnAction(
-                bE -> dHandler.setDrawType(DrawType.FREE)
+                bE -> {
+                    dHandler.setDrawType(DrawType.FREE);
+
+                    vBRoot.getChildren().set(2, freeVBox);
+                }
 
         );
         lineDraw.setOnAction(
-                bE -> dHandler.setDrawType(DrawType.LINE)
+                bE -> {
+                    dHandler.setDrawType(DrawType.LINE);
+
+                    vBRoot.getChildren().set(2, lineVBox);
+                }
+        );
+        shapes.setOnAction(
+                bE -> {
+                    dHandler.setDrawType(DrawType.SHAPE);
+
+                    vBRoot.getChildren().set(2, shapesVBox);
+                }
+        );
+        colorPicker.setOnAction(
+                bE -> {
+                    dHandler.setDrawType(DrawType.PICKER);
+
+                    vBRoot.getChildren().set(2, pickerVBox);
+                }
         );
 
         //
@@ -691,6 +775,22 @@ public class paint_2 extends Application {
 
                             }
                         }
+                        case PICKER -> {
+                            picker[0] = (int) e.getX();
+                            picker[1] = (int) e.getY();
+                            pickerXY.setText("Coordinates: " + picker[0] + ", " + picker[1]);
+                            pickerColor.setFill(iHandler.getPixelColor(
+                                    canvas.getGraphicsContext2D().getCanvas().snapshot(null,null),
+                                    picker[0],
+                                    picker[1]));
+                            if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
+
+                                dHandler.setCurrentColor((Color) pickerColor.getFill());
+                                pHandler.setCurrentColor(dHandler.getCurrentColor());
+                                rgbHash.setText(pHandler.getColorRGB());
+
+                            }
+                        }
                         default -> {
                         }
                     }
@@ -849,6 +949,9 @@ public class paint_2 extends Application {
             }
         }
     }
+
+
+
 
 
     /* main method
