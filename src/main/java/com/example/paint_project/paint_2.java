@@ -11,6 +11,7 @@ import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -40,6 +41,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -154,7 +156,7 @@ public class paint_2 extends Application {
         colorPicker.setToggleGroup(buttons);
 
         GridPane buttonGrid = new GridPane();
-        buttonGrid.setGridLinesVisible(true);
+        //buttonGrid.setGridLinesVisible(true);
         buttonGrid.setPrefSize(50, 50);
 
         buttonGrid.add(freeDraw, 0,0);
@@ -243,27 +245,30 @@ public class paint_2 extends Application {
                 pBar);
 
         // Shapes Pane
+
+        ToggleGroup shapeSelect = new ToggleGroup();
         VBox shapesVBox = new VBox();
         ToggleButton triangleSelect = new ToggleButton("",
-                new Polygon(0,10, 5,0, 10,10));
+          new Polygon(0,10, 5,0, 10,10));
         ToggleButton squareSelect = new ToggleButton("",
-                new Rectangle(10,10));
+          new Rectangle(10,10));
         ToggleButton circleSelect = new ToggleButton("",
-                new Circle(5));
+          new Circle(5));
         ToggleButton ellipseSelect = new ToggleButton("",
-                new Ellipse(5, 3.5));
+          new Ellipse(5, 3.5));
         ToggleButton rectangleSelect = new ToggleButton("",
                 new Rectangle(10, 5));
 
-        ToggleGroup shapeSelection = new ToggleGroup();
-        triangleSelect.setToggleGroup(shapeSelection);
-        squareSelect.setToggleGroup(shapeSelection);
-        circleSelect.setToggleGroup(shapeSelection);
-        ellipseSelect.setToggleGroup(shapeSelection);
-        rectangleSelect.setToggleGroup(shapeSelection);
+        triangleSelect.setToggleGroup(shapeSelect);
+        circleSelect.setToggleGroup(shapeSelect);
+        squareSelect.setToggleGroup(shapeSelect);
+        ellipseSelect.setToggleGroup(shapeSelect);
+        rectangleSelect.setToggleGroup(shapeSelect);
+
+
 
         GridPane shapeGrid = new GridPane();
-        shapeGrid.setGridLinesVisible(true);
+        //shapeGrid.setGridLinesVisible(true);
         shapeGrid.setPrefSize(50, 50);
 
         shapeGrid.add(triangleSelect, 0,0);
@@ -272,10 +277,10 @@ public class paint_2 extends Application {
         shapeGrid.add(ellipseSelect, 0, 1);
         shapeGrid.add(rectangleSelect, 1, 1);
 
-
+        Label shapeText = new Label("Shape: None");
         shapesVBox.getChildren().addAll(
                 new Label("Shape Size"),
-                new Label("Shape Shape"),
+                shapeText,
                 shapeGrid
         );
 
@@ -367,8 +372,9 @@ public class paint_2 extends Application {
 
         // LAYOUT Setup
         // Free/Line/Shape root
-        VBox FLSRoot = new VBox(lineWidthSlider,
-                new VBox(widthPreviewRoot, textW),
+        VBox FLSRoot = new VBox(
+                new HBox(lineWidthSlider,
+                new VBox(widthPreviewRoot, textW)),
                 freeVBox);
         VBox vBRoot = new VBox(buttonGrid, vB1, FLSRoot);
         HBox hB1 = new HBox(menuB);
@@ -625,7 +631,7 @@ public class paint_2 extends Application {
                     dHandler.setDrawType(DrawType.FREE);
 
                     //vBRoot.getChildren().set(3, FLSRoot);
-                    FLSRoot.getChildren().set(2, freeVBox);
+                    FLSRoot.getChildren().set(1, freeVBox);
                 }
 
         );
@@ -634,21 +640,21 @@ public class paint_2 extends Application {
                     dHandler.setDrawType(DrawType.LINE);
 
                     //vBRoot.getChildren().set(3, FLSRoot);
-                    FLSRoot.getChildren().set(2, lineVBox);
+                    FLSRoot.getChildren().set(1, lineVBox);
                 }
         );
         shapes.setOnAction(
                 bE -> {
                     dHandler.setDrawType(DrawType.SHAPE);
 
-                    FLSRoot.getChildren().set(2, shapesVBox);
+                    FLSRoot.getChildren().set(1, shapesVBox);
                 }
         );
         colorPicker.setOnAction(
                 bE -> {
                     dHandler.setDrawType(DrawType.PICKER);
 
-                    FLSRoot.getChildren().set(2, pickerVBox);
+                    FLSRoot.getChildren().set(1, pickerVBox);
                 }
         );
 
@@ -680,7 +686,7 @@ public class paint_2 extends Application {
                 aE -> {
                     dHandler.setLineWidth(pHandler.thin);
                     pHandler.setCurrentLine(1);
-                    textW.setText(Double.toString(dHandler.lineWidth));
+                    textW.setText(Double.toString(dHandler.getLineWidth()));
 
                     widthPreviewFore.setX(24);
                     widthPreviewFore.setY(24);
@@ -701,7 +707,8 @@ public class paint_2 extends Application {
                 aE -> {
                     dHandler.setLineWidth(pHandler.def);
                     pHandler.setCurrentLine(5);
-                    textW.setText(Double.toString(dHandler.lineWidth));
+
+                    textW.setText(Double.toString(dHandler.getLineWidth()));
 
                     widthPreviewFore.setX(23);
                     widthPreviewFore.setY(23);
@@ -722,7 +729,7 @@ public class paint_2 extends Application {
                 aE -> {
                     dHandler.setLineWidth(pHandler.thick);
                     pHandler.setCurrentLine(10);
-                    textW.setText(Double.toString(dHandler.lineWidth));
+                    textW.setText(Double.toString(dHandler.getLineWidth()));
 
 
                     widthPreviewFore.setX(19.5);
@@ -823,6 +830,49 @@ public class paint_2 extends Application {
                 }
         );
 
+        // SHAPE selection
+        triangleSelect.setOnAction(
+                bE -> {
+                    dHandler.setShapeType(ShapeType.TRIANGLE);
+                    shapeText.setText("Shape: TRIANGLE");
+
+                }
+        );
+
+        circleSelect.setOnAction(
+                bE -> {
+                    dHandler.setShapeType(ShapeType.CIRCLE);
+                    shapeText.setText("Shape: CIRCLE");
+
+                }
+        );
+
+        ellipseSelect.setOnAction(
+                bE -> {
+                    dHandler.setShapeType(ShapeType.ELLIPSE);
+                    shapeText.setText("Shape: ELLIPSE");
+
+                }
+        );
+
+        squareSelect.setOnAction(
+                bE -> {
+                    dHandler.setShapeType(ShapeType.SQUARE);
+                    shapeText.setText("Shape: SQUARE");
+
+                }
+        );
+
+        rectangleSelect.setOnAction(
+                bE -> {
+                    dHandler.setShapeType(ShapeType.RECTANGLE);
+                    shapeText.setText("Shape: RECTANGLE");
+
+                }
+        );
+
+
+
 
         // DRAWING
 
@@ -863,10 +913,10 @@ public class paint_2 extends Application {
                         case LINE -> {
                             //System.out.println("LINE");
                             if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
-                                if (dHandler.isFirstClick()) {
+                                if (!dHandler.isFirstClick()) {
                                     dHandler.setPosA(e.getX(),
                                             e.getY());
-                                    System.out.println(dHandler.isFirstClick());
+
                                     dHandler.click();
                                 } else {
                                     FXC.setLineWidth(5);
@@ -877,8 +927,6 @@ public class paint_2 extends Application {
                                             e.getX(),
                                             e.getY());
                                     dHandler.setPosA(0, 0);
-                                    System.out.println(dHandler.isFirstClick());
-                                    dHandler.click();
 
 
                                 }
@@ -900,6 +948,54 @@ public class paint_2 extends Application {
                                 pHandler.setCurrentColor(dHandler.getCurrentColor());
                                 rgbHash.setText(pHandler.getColorRGB());
 
+                            }
+                        }
+                        case SHAPE -> {
+                            switch (dHandler.getShapeType()){
+                                case TRIANGLE -> {
+                                    //double[] tX = new double[3];
+                                    //double[] tY = new double[3];
+                                    if (dHandler.isFirstClick()){
+                                        dHandler.setPoints(1);
+                                        dHandler.click();
+
+                                    }
+
+                                    if(e.getEventType() == MouseEvent.MOUSE_CLICKED){
+                                        System.out.println("Mouse Pressed -- points =" + dHandler.getPoints() + "/3");
+
+                                        if (dHandler.getPoints() < 3){ // If this is not the third click
+                                            System.out.println("We in it now\n" +
+                                                    e.getX() + ", " + e.getY());
+                                            dHandler.pX[dHandler.getPoints() - 1] = e.getX();
+                                            dHandler.pY[dHandler.getPoints() - 1] = e.getY();
+                                            System.out.println(dHandler.getPoints());
+                                            dHandler.setPoints(dHandler.getPoints() + 1);
+                                            System.out.println(dHandler.getPoints());
+                                        }
+                                        else {
+                                            dHandler.pX[2] = e.getX();
+                                            dHandler.pY[2] = e.getY();
+                                            System.out.println("Point " + dHandler.getPoints() + "\n" +
+                                                    "tX = [" + dHandler.pX[0] + "," + dHandler.pX[1] + "," + dHandler.pX[2] + "]\n" +
+                                                    "tY = [" + dHandler.pY[0] + "," + dHandler.pY[1] + "," + dHandler.pY[2] + "]");
+                                            FXC.setFill(dHandler.getCurrentColor());
+                                            //FXC.strokePolygon(
+                                            //        dHandler.pX, dHandler.pY, 3);
+                                            FXC.fillPolygon(
+                                                    dHandler.pX, dHandler.pY, 3);
+                                            dHandler.click();
+                                            dHandler.setPoints(0);
+                                        }
+
+
+
+
+
+
+
+                                    }
+                                }
                             }
                         }
                         default -> {

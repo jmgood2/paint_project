@@ -13,24 +13,46 @@ enum DrawType{
     PICKER
 }
 
+enum ShapeType{
+    NONE,
+    CIRCLE,
+    TRIANGLE,
+    ELLIPSE,
+    SQUARE,
+    RECTANGLE
+}
+
 // Class for Objects that handle all drawing on the canvas
 public class DrawHandler {
     private DrawType drawType;
+    private ShapeType shapeType;
 
     Point2D posA;
-    boolean firstClick;
-    double lineWidth;
+    Point2D posB;
+    private boolean firstClick;
+    private double lineWidth;
+    private int points;
+    double[] pX;
+    double[] pY;
 
     Color color = Color.BROWN;
 
 
 
+    // METHODS
+    //
 
+    // Constructors
     public DrawHandler(){
         drawType = DrawType.NONE;
+        shapeType = ShapeType.NONE;
         posA = new Point2D(0,0);
+        posB = new Point2D(0,0);
         firstClick = true;
         lineWidth = 20;
+        points = 0;
+        pX = new double[4];
+        pY = new double[4];
     }
 
     public void click(){
@@ -41,6 +63,7 @@ public class DrawHandler {
         return firstClick;
     }
 
+    // GETTERS
     public double getLineWidth(){
         return lineWidth;
     }
@@ -53,8 +76,14 @@ public class DrawHandler {
         return drawType;
     }
 
+    public ShapeType getShapeType(){return shapeType;}
+
+
     public Point2D getPosA(){
         return posA;
+    }
+    public Point2D getPosB() {
+        return posB;
     }
 
     public double getPosAX(){
@@ -65,7 +94,9 @@ public class DrawHandler {
         return posA.getY();
     }
 
+    public int getPoints(){return points;}
 
+    // SETTERS
     public void setLineWidth(double i) {
         lineWidth = i;
     }
@@ -77,6 +108,10 @@ public class DrawHandler {
     public void setDrawType(DrawType d){
         drawType = d;
     }
+
+    public void setShapeType(ShapeType s){shapeType = s;}
+
+    public void resetShapeType(){shapeType = ShapeType.NONE;}
 
     public void setDrawType(String s){
         switch (s){
@@ -93,6 +128,12 @@ public class DrawHandler {
 
     public void setPosA(double x, double y){
         posA = new Point2D(x, y);
+    }
+
+    public void setPosB(double x, double y){posB = new Point2D(x, y);}
+
+    public void setPoints(int p){
+        points = p;
     }
 
 
