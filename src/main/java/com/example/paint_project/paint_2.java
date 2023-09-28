@@ -10,11 +10,13 @@ package com.example.paint_project;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -30,8 +32,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
+import javafx.scene.shape.*;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
@@ -201,38 +202,81 @@ public class paint_2 extends Application {
 
         MenuBar pBar = new MenuBar(pMenu);
 
-        Slider lineWidthSlider = new Slider(5, 50, 5);
+        Slider lineWidthSlider = new Slider(0, 50, 5);
+        lineWidthSlider.setOrientation(Orientation.VERTICAL);
         lineWidthSlider.setShowTickMarks(true);
         lineWidthSlider.setShowTickLabels(true);
         lineWidthSlider.setBlockIncrement(1);
 
+        Rectangle widthPreviewBack = new Rectangle(50, 50);
+        widthPreviewBack.setStroke(Color.BLACK);
+        widthPreviewBack.setFill(Color.TRANSPARENT);
+        Rectangle widthPreviewFore = new Rectangle(24,24,
+                pHandler.getCurrentLine().getStrokeWidth(),
+                pHandler.getCurrentLine().getStrokeWidth());
+        widthPreviewFore.setStroke(Color.TRANSPARENT);
+        widthPreviewFore.setFill(dHandler.getCurrentColor());
+
+        Group widthPreviewRoot = new Group(widthPreviewBack, widthPreviewFore);
+
+
+
 
         TextField textW = new TextField(Double.toString(dHandler.getLineWidth()));
         textW.setMinWidth(20);
-        textW.setMaxWidth(40);
+        textW.setMaxWidth(50);
 
         // Contextual Pane
+
+
+
 
         // Free Draw Pane
         VBox freeVBox = new VBox();
         freeVBox.getChildren().addAll(
-                new Label("Brush Size"),
                 new Label("Brush Shape")
         );
 
         // Line Draw Pane
         VBox lineVBox = new VBox();
         lineVBox.getChildren().addAll(
-                pBar,
-                lineWidthSlider,
-                textW
-        );
+                pBar);
 
         // Shapes Pane
         VBox shapesVBox = new VBox();
+        ToggleButton triangleSelect = new ToggleButton("",
+                new Polygon(0,10, 5,0, 10,10));
+        ToggleButton squareSelect = new ToggleButton("",
+                new Rectangle(10,10));
+        ToggleButton circleSelect = new ToggleButton("",
+                new Circle(5));
+        ToggleButton ellipseSelect = new ToggleButton("",
+                new Ellipse(5, 3.5));
+        ToggleButton rectangleSelect = new ToggleButton("",
+                new Rectangle(10, 5));
+
+        ToggleGroup shapeSelection = new ToggleGroup();
+        triangleSelect.setToggleGroup(shapeSelection);
+        squareSelect.setToggleGroup(shapeSelection);
+        circleSelect.setToggleGroup(shapeSelection);
+        ellipseSelect.setToggleGroup(shapeSelection);
+        rectangleSelect.setToggleGroup(shapeSelection);
+
+        GridPane shapeGrid = new GridPane();
+        shapeGrid.setGridLinesVisible(true);
+        shapeGrid.setPrefSize(50, 50);
+
+        shapeGrid.add(triangleSelect, 0,0);
+        shapeGrid.add(squareSelect, 1, 0);
+        shapeGrid.add(circleSelect, 3, 0);
+        shapeGrid.add(ellipseSelect, 0, 1);
+        shapeGrid.add(rectangleSelect, 1, 1);
+
+
         shapesVBox.getChildren().addAll(
                 new Label("Shape Size"),
-                new Label("Shape Shape")
+                new Label("Shape Shape"),
+                shapeGrid
         );
 
         // Color Picker Pane
@@ -322,7 +366,11 @@ public class paint_2 extends Application {
         BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
 
         // LAYOUT Setup
-        VBox vBRoot = new VBox(buttonGrid, vB1, freeVBox);
+        // Free/Line/Shape root
+        VBox FLSRoot = new VBox(lineWidthSlider,
+                new VBox(widthPreviewRoot, textW),
+                freeVBox);
+        VBox vBRoot = new VBox(buttonGrid, vB1, FLSRoot);
         HBox hB1 = new HBox(menuB);
         //HBox hB2 = new HBox(buttonB);
         borderRoot.setTop(hB1);
@@ -576,7 +624,8 @@ public class paint_2 extends Application {
                 bE -> {
                     dHandler.setDrawType(DrawType.FREE);
 
-                    vBRoot.getChildren().set(2, freeVBox);
+                    //vBRoot.getChildren().set(3, FLSRoot);
+                    FLSRoot.getChildren().set(2, freeVBox);
                 }
 
         );
@@ -584,21 +633,22 @@ public class paint_2 extends Application {
                 bE -> {
                     dHandler.setDrawType(DrawType.LINE);
 
-                    vBRoot.getChildren().set(2, lineVBox);
+                    //vBRoot.getChildren().set(3, FLSRoot);
+                    FLSRoot.getChildren().set(2, lineVBox);
                 }
         );
         shapes.setOnAction(
                 bE -> {
                     dHandler.setDrawType(DrawType.SHAPE);
 
-                    vBRoot.getChildren().set(2, shapesVBox);
+                    FLSRoot.getChildren().set(2, shapesVBox);
                 }
         );
         colorPicker.setOnAction(
                 bE -> {
                     dHandler.setDrawType(DrawType.PICKER);
 
-                    vBRoot.getChildren().set(2, pickerVBox);
+                    FLSRoot.getChildren().set(2, pickerVBox);
                 }
         );
 
@@ -631,6 +681,13 @@ public class paint_2 extends Application {
                     dHandler.setLineWidth(pHandler.thin);
                     pHandler.setCurrentLine(1);
                     textW.setText(Double.toString(dHandler.lineWidth));
+
+                    widthPreviewFore.setX(24);
+                    widthPreviewFore.setY(24);
+                    widthPreviewFore.setWidth(1);
+                    widthPreviewFore.setHeight(1);
+                    lineWidthSlider.setValue(1);
+
                     Line mLine = new Line(0,
                             10,
                             20,
@@ -645,6 +702,13 @@ public class paint_2 extends Application {
                     dHandler.setLineWidth(pHandler.def);
                     pHandler.setCurrentLine(5);
                     textW.setText(Double.toString(dHandler.lineWidth));
+
+                    widthPreviewFore.setX(23);
+                    widthPreviewFore.setY(23);
+                    widthPreviewFore.setWidth(5);
+                    widthPreviewFore.setHeight(5);
+                    lineWidthSlider.setValue(5);
+
                     Line mLine = new Line(0,
                             10,
                             20,
@@ -659,6 +723,14 @@ public class paint_2 extends Application {
                     dHandler.setLineWidth(pHandler.thick);
                     pHandler.setCurrentLine(10);
                     textW.setText(Double.toString(dHandler.lineWidth));
+
+
+                    widthPreviewFore.setX(19.5);
+                    widthPreviewFore.setY(19.5);
+                    widthPreviewFore.setWidth(10);
+                    widthPreviewFore.setHeight(10);
+                    lineWidthSlider.setValue(10);
+
                     Line mLine = new Line(0,
                             10,
                             20,
@@ -697,8 +769,9 @@ public class paint_2 extends Application {
 
 
                     }
+                    String val = String.valueOf(c);
 
-                    textW.setText(String.valueOf(c));
+                    textW.setText(val);
 
                 }
         );
@@ -706,9 +779,47 @@ public class paint_2 extends Application {
         textW.setOnKeyPressed(
                 kE -> {
                     if (kE.getCode() == KeyCode.ENTER){
-
                         dHandler.setLineWidth(Double.parseDouble(textW.getText()));
+                        if (dHandler.getLineWidth() > 50) {
+                            dHandler.setLineWidth(50);
+                            textW.setText("50");
+                        }
+                        else if (dHandler.getLineWidth() < 1){
+                            dHandler.setLineWidth(1);
+                            textW.setText("1");
+                        }
+
+                        // Get the xy coords for the upper left of the preview rect
+                        double pos = 25 - (dHandler.getLineWidth() / 2);
+                        if (pos < 0) pos = 0;
+
+                        widthPreviewFore.setX(pos);
+                        widthPreviewFore.setY(pos);
+                        widthPreviewFore.setWidth(dHandler.getLineWidth());
+                        widthPreviewFore.setHeight(dHandler.getLineWidth());
+                        lineWidthSlider.setValue(dHandler.getLineWidth());
+
                     }
+                }
+        );
+
+        lineWidthSlider.setOnMouseReleased(
+                sE -> {
+                    if (lineWidthSlider.getValue() < 1) lineWidthSlider.setValue(1);
+                    dHandler.setLineWidth(lineWidthSlider.getValue());
+
+                    // Get the xy coords for the upper left of the preview rect
+                    double w = dHandler.getLineWidth();
+                    double pos = 25 - (w / 2);
+                    if (pos < 0) pos = 0;
+
+                    widthPreviewFore.setX(pos);
+                    widthPreviewFore.setY(pos);
+                    widthPreviewFore.setWidth(w);
+                    widthPreviewFore.setHeight(w);
+                    lineWidthSlider.setValue(w);
+                    textW.setText(String.valueOf(w));
+
                 }
         );
 
