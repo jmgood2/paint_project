@@ -951,10 +951,11 @@ public class paint_2 extends Application {
                             }
                         }
                         case SHAPE -> {
+                            // TODO add preview of shape as it is being drawn
+                            // TODO add orientation options
+
                             switch (dHandler.getShapeType()){
                                 case TRIANGLE -> {
-                                    //double[] tX = new double[3];
-                                    //double[] tY = new double[3];
                                     if (dHandler.isFirstClick()){
                                         dHandler.setPoints(1);
                                         dHandler.click();
@@ -986,18 +987,225 @@ public class paint_2 extends Application {
                                                     dHandler.pX, dHandler.pY, 3);
                                             dHandler.click();
                                             dHandler.setPoints(0);
+
+                                            dHandler.setShapeType(ShapeType.NONE);
+                                            shapeSelect.getSelectedToggle().setSelected(false);
                                         }
 
+                                    }
+                                }
+                                case SQUARE -> {
+                                    if(e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+                                        if (dHandler.isFirstClick()) {
+                                            dHandler.click();
+                                            dHandler.pX[0] = e.getX();
+                                            dHandler.pY[0] = e.getY();
+
+                                        }
+                                        else {
+                                            double topLX = 0;
+                                            double topLY = 0;
+                                            double width = 0;
+                                            if (e.getX() > dHandler.pX[0]){ // Second click to the right of first
+                                                width = e.getX() - dHandler.pX[0];
+                                                topLX = dHandler.pX[0];
+                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+                                                    topLY = e.getY();
+                                                }
+                                                else{
+                                                    topLY = dHandler.pY[0];
+
+                                                }
+
+                                            }
+                                            else{
+                                                width = dHandler.pX[0] - e.getX();
+                                                topLX = e.getX();
+
+
+                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+                                                    topLY = e.getY();
+                                                }
+                                                else{
+                                                    topLY = dHandler.pY[0];
+
+                                                }
+                                            }
+                                            if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
+                                            else width = Math.max(width, (e.getY() - dHandler.pY[0]));
+                                            FXC.fillRect(
+                                                    topLX, topLY,
+                                                    width, width);
 
 
 
 
+                                            dHandler.click();
+
+                                            dHandler.setShapeType(ShapeType.NONE);
+                                            shapeSelect.getSelectedToggle().setSelected(false);
+
+                                        }
+                                    }
+
+                                }
+                                case CIRCLE -> {
+                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
+                                        if (dHandler.isFirstClick()){
+                                            dHandler.click();
+                                            dHandler.pX[0] = e.getX();
+                                            dHandler.pY[0] = e.getY();
 
 
+                                        }
+                                        else{
+                                            double topLX = 0;
+                                            double topLY = 0;
+                                            double width = 0;
+                                            if (e.getX() > dHandler.pX[0]){ // Second click to the right of first
+                                                width = e.getX() - dHandler.pX[0];
+                                                topLX = dHandler.pX[0];
+                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+                                                    topLY = e.getY();
+                                                }
+                                                else{
+                                                    topLY = dHandler.pY[0];
+
+                                                }
+
+                                            }
+                                            else{
+                                                width = dHandler.pX[0] - e.getX();
+                                                topLX = e.getX();
+
+
+                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+                                                    topLY = e.getY();
+                                                }
+                                                else{
+                                                    topLY = dHandler.pY[0];
+
+                                                }
+                                            }
+                                            if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
+                                            else width = Math.max(width, (e.getY() - dHandler.pY[0]));
+                                            FXC.fillOval(
+                                                    topLX, topLY,
+                                                    width, width);
+
+
+
+
+                                            dHandler.click();
+
+                                            dHandler.setShapeType(ShapeType.NONE);
+                                            shapeSelect.getSelectedToggle().setSelected(false);
+
+
+                                        }
+
+                                    }
+                                    else if (e.getEventType() == MouseEvent.MOUSE_DRAGGED){
+                                        if (!dHandler.isFirstClick()){
+                                            // TODO add handling for dragging
+
+                                        }
+                                        else{ // add same handling fo second click from previous section
+
+                                        }
+
+                                    }
+                                }
+                                case ELLIPSE -> {
+                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+                                        if (dHandler.isFirstClick()) {
+                                            dHandler.click();
+                                            dHandler.pX[0] = e.getX();
+                                            dHandler.pY[0] = e.getY();
+
+                                        } else {
+                                            FXC.setFill(dHandler.getCurrentColor());
+                                            if (e.getX() > dHandler.pX[0]) {
+                                                if (e.getY() > dHandler.pY[0]) {
+                                                    FXC.fillOval(
+                                                            dHandler.pX[0], dHandler.pY[0],
+                                                            e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+                                                    );
+                                                } else {
+                                                    FXC.fillOval(
+                                                            dHandler.pX[0], dHandler.pY[0],
+                                                            e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+                                                    );
+                                                }
+                                            } else {
+                                                if (e.getY() > dHandler.pY[0]) {
+                                                    FXC.fillOval(
+                                                            e.getX(), dHandler.pY[0],
+                                                            dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+                                                    );
+                                                } else {
+                                                    FXC.fillOval(
+                                                            e.getX(), e.getY(),
+                                                            dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+                                                    );
+                                                }
+
+                                            }
+                                            dHandler.click();
+
+                                            dHandler.setShapeType(ShapeType.NONE);
+                                            shapeSelect.getSelectedToggle().setSelected(false);
+                                        }
+                                    }
+
+                                }
+                                case RECTANGLE -> {
+                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+                                        if (dHandler.isFirstClick()) {
+                                            dHandler.click();
+                                            dHandler.pX[0] = e.getX();
+                                            dHandler.pY[0] = e.getY();
+
+                                        } else {
+                                            FXC.setFill(dHandler.getCurrentColor());
+                                            if (e.getX() > dHandler.pX[0]) {
+                                                if (e.getY() > dHandler.pY[0]) {
+                                                    FXC.fillRect(
+                                                            dHandler.pX[0], dHandler.pY[0],
+                                                            e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+                                                    );
+                                                } else {
+                                                    FXC.fillRect(
+                                                            dHandler.pX[0], dHandler.pY[0],
+                                                            e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+                                                    );
+                                                }
+                                            } else {
+                                                if (e.getY() > dHandler.pY[0]) {
+                                                    FXC.fillRect(
+                                                            e.getX(), dHandler.pY[0],
+                                                            dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+                                                    );
+                                                } else {
+                                                    FXC.fillRect(
+                                                            e.getX(), e.getY(),
+                                                            dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+                                                    );
+                                                }
+
+                                            }
+                                            dHandler.click();
+
+                                            dHandler.setShapeType(ShapeType.NONE);
+                                            shapeSelect.getSelectedToggle().setSelected(false);
+
+                                        }
                                     }
                                 }
                             }
                         }
+
+
                         default -> {
                         }
                     }
