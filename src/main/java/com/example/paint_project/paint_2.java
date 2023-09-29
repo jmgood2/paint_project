@@ -954,7 +954,6 @@ public class paint_2 extends Application {
                         case SHAPE -> {
                             // TODO add preview of shape as it is being drawn
                             // TODO add orientation options
-                            // TODO add better comments
 
                             switch (dHandler.getShapeType()){
                                 case TRIANGLE -> {
