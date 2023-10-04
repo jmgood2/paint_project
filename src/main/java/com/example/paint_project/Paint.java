@@ -1,7 +1,8 @@
+package com.example.paint_project;
+
 import com.example.paint_project.DrawHandler;
 import com.example.paint_project.ImageHandler;
 import com.example.paint_project.PaletteHandler;
-import com.example.paint_project.ShapeType;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
@@ -517,7 +518,7 @@ public class Paint extends Application {
                             iFile.getName().lastIndexOf('.') + 1);
                     System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
                     if (iFile == null){
-                        File file = saveImage(stage, new File ("Images"));
+                        File file = saveImage(this.stage, new File ("Images"));
 
                         System.out.println("DEBUG -- RUNNING SAVE IMAGE");
                         saveImageAs(canvas, file);
@@ -1309,6 +1310,155 @@ public class Paint extends Application {
 
 
 
+    }
+
+    /**************************
+     * METHODS
+     ****************** ***/
+
+    /* openImage
+     * Launches a FileChooser explorer for locating an image
+     * Images filtered by type
+     * @param stage
+     * @return File
+     */
+    public static File openImage(Stage stage){
+        FileChooser f = new FileChooser();
+        f.setTitle("Open Image");
+
+        File init = new File("src/main/images");
+        f.setInitialDirectory(init);
+        f.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("All Images", "*.*"),
+                new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("BMP", "*.bmp"),
+                new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
+        );
+        return f.showOpenDialog(stage);
+
+    }
+
+    /* saveImage
+     * Launches a FileChooser explorer for saving an Image
+     */
+    public static File saveImage(Stage stage, File initial){
+        FileChooser fChooser = new FileChooser();
+        fChooser.setTitle("Save Image");
+        //fChooser.setInitialDirectory(initial);
+        File init = new File("src/main/images");
+        fChooser.setInitialDirectory(init);
+        fChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("All Images", "*.*"),
+                new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("BMP", "*.bmp"),
+                new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
+        );
+
+        if (fChooser.showSaveDialog(stage) != null) return fChooser.showSaveDialog(stage);
+        else {
+            System.out.println("ERROR -- returned file is Null!");
+            return null;
+        }
+
+    }
+
+    public static void saveImageAs(Canvas canvas, File file){
+
+        try{
+            System.out.println("SYSTEM Save Image As w/ " + file.getAbsolutePath());
+            WritableImage wImage = new WritableImage((int) canvas.getWidth(),
+                    (int) canvas.getHeight());
+            canvas.snapshot(null, wImage);
+
+            BufferedImage bImage1 = SwingFXUtils.fromFXImage(wImage, null);
+            String ext = file.getPath().substring(file.getPath().lastIndexOf(".") + 1);
+
+            BufferedImage bImage2 = bImage1;
+
+            if (ext.equals("jpg") || ext.equals("jpeg")){
+                bImage2 = new BufferedImage(
+                        bImage1.getWidth(),
+                        bImage1.getHeight(),
+                        BufferedImage.OPAQUE);
+            }
+            Graphics2D graphics = bImage2.createGraphics();
+            graphics.drawImage(bImage1, 0, 0, null);
+
+            ImageIO.write(bImage2,
+                    ext,
+                    file);
+            graphics.dispose();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Error LOG
+            System.out.println("ERROR SAVING \n" + e);
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
+            // Error LOG
+            System.out.println("ERROR SAVING (NULLPOINTER \n" + ex);
+        }
+
+
+    }
+
+
+
+
+    /* aboutPop
+     * Opens a new Scene with About information
+     */
+    public static void aboutPop(){
+        Stage aPop = new Stage();
+        aPop.setTitle("About");
+
+        Label aLabel = new Label("Pain(T) Alpha Build 2.1\n9/15/2023\n\nJonathan Good\nCS 250\n");
+
+        VBox vB = new VBox(10);
+        vB.getChildren().addAll(aLabel);
+        vB.setAlignment(Pos.CENTER);
+
+        Scene aScene = new Scene (vB, 100, 100);
+        aPop.setScene(aScene);
+        aPop.showAndWait();
+    }
+
+    public void clearTemp(File tempDir, ImageHandler iH) throws IOException {
+        iH.clearTempList();
+        File[] tempFiles = tempDir.listFiles();
+        if (tempFiles != null) {
+            for (File f: tempFiles){
+                if (f.isDirectory()) clearTemp(f);
+                else Files.delete(Paths.get(f.getPath()));
+            }
+        }
+        Files.delete(Paths.get(tempDir.getPath()));
+    }
+
+    public void clearTemp(File tempDir) throws IOException {
+
+        Files.delete(Paths.get(tempDir.getPath()));
+    }
+
+    public void newTempFiles(Canvas c, Path d, File f, ImageHandler iH) throws IOException {
+        clearTempFiles(d);
+        System.out.println(f.getAbsolutePath());
+        iH.newTempList(f);
+        saveImageAs(c, iH.getOriginalImage());
+    }
+
+    public void clearTempFiles(Path d) throws IOException {
+        File tempDir = new File(d.toString());
+        File[] tempFiles = tempDir.listFiles();
+        if (tempFiles != null) {
+            for (File f: tempFiles){
+                if (f.isDirectory()) clearTempFiles(f.toPath());
+                else Files.delete(Paths.get(f.getPath()));
+            }
+        }
     }
 
 
