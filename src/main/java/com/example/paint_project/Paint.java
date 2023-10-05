@@ -138,7 +138,7 @@ public class Paint extends Application {
 
 
     //Constructor
-    public Paint() throws IOException {
+    public Paint(Stage stage) throws IOException {
         // Variables
         picker = new int[2];
         canvasH = 500;
@@ -518,7 +518,7 @@ public class Paint extends Application {
                             iFile.getName().lastIndexOf('.') + 1);
                     System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
                     if (iFile == null){
-                        File file = saveImage(this.stage, new File ("Images"));
+                        File file = saveImage(stage, new File ("Images"));
 
                         System.out.println("DEBUG -- RUNNING SAVE IMAGE");
                         saveImageAs(canvas, file);
@@ -1448,6 +1448,17 @@ public class Paint extends Application {
         System.out.println(f.getAbsolutePath());
         iH.newTempList(f);
         saveImageAs(c, iH.getOriginalImage());
+    }
+
+    public void pushTempFile(Canvas c, Path d, ImageHandler iH) throws IOException {
+        File f = new File(String.valueOf(Files.createTempFile(
+                d,
+                null,
+                iH.getOriginalImage().getPath().substring(
+                        iH.getOriginalImage().getPath().lastIndexOf(".")
+                ))));
+        iH.addTempImage(f);
+        saveImageAs(c, f);
     }
 
     public void clearTempFiles(Path d) throws IOException {
