@@ -26,6 +26,7 @@ public class ImageHandler {
         openImage = null;
         imageMap = new HashMap<>();
         openImagesFileList = new ArrayList<>();
+        tempImagesList = new ArrayList<>();
         tempDir = FileSystems.getDefault().getPath("/images", "/temp");
 
     }

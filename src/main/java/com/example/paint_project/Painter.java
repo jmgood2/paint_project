@@ -1,19 +1,14 @@
 package com.example.paint_project;
 
-import com.example.paint_project.DrawHandler;
-import com.example.paint_project.ImageHandler;
-import com.example.paint_project.PaletteHandler;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -37,7 +32,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -48,7 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-public class Paint extends Application {
+public class Painter extends Application {
     // Private Variables
 
     int[] picker;
@@ -138,7 +132,7 @@ public class Paint extends Application {
 
 
     //Constructor
-    public Paint(Stage stage) throws IOException {
+    public Painter(Stage stage) throws IOException {
         // Variables
         picker = new int[2];
         canvasH = 500;
@@ -953,7 +947,6 @@ public class Paint extends Application {
                             }
                         }
                         case LINE -> {
-                            //System.out.println("LINE");
                             if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
                                 if (dHandler.isFirstClick()) {
                                     dHandler.setPosA(e.getX(),

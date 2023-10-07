@@ -11,13 +11,11 @@ import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -41,7 +39,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -52,9 +49,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.logging.*;
+
+
 
 
 public class paint_2 extends Application {
+    private static Logger logger = Logger.getLogger("Paint");
+    //private static FileHandler fh = new FileHandler("mylog.txt");
+    private static StreamHandler sH = new StreamHandler(System.out, new SimpleFormatter());
+
     @Override
     public void start(Stage stage) throws IOException {
         // Create Handler objects
@@ -419,7 +423,7 @@ public class paint_2 extends Application {
                     //Open Image
                     File openFile = openImage(stage);
                     String openFilePath = openFile.getAbsolutePath();
-                    System.out.println("DEBUG -- Opening " + openFilePath + "...");
+                    logger.info("DEBUG -- Opening " + openFilePath + "...");
 
                     // Add opened image to Image Handler
                     try {
@@ -482,20 +486,20 @@ public class paint_2 extends Application {
 
                     String fType = iFile.getName().substring(
                             iFile.getName().lastIndexOf('.') + 1);
-                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
+                    logger.info("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
                     if (iFile == null){
                         File file = saveImage(stage, new File ("Images"));
 
-                        System.out.println("DEBUG -- RUNNING SAVE IMAGE");
+                        logger.info("DEBUG -- RUNNING SAVE IMAGE");
                         saveImageAs(canvas, file);
                     }
                     else {
-                        System.out.println("DEBUG -- SAVING...");
+                        logger.info("DEBUG -- SAVING...");
                         saveImageAs(canvas, iFile);
 
 
                     }
-                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
+                    logger.info("DEBUG -- RUNNING SAVE IMAGE AS");
 
                 }
         );
@@ -514,9 +518,9 @@ public class paint_2 extends Application {
                             e.printStackTrace();
                         }
                     }
-                    System.out.println("DEBUG -- RUNNING SAVE IMAGE");
+                    logger.info("DEBUG -- RUNNING SAVE IMAGE");
                     saveImageAs(canvas, file);
-                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
+                    logger.info("DEBUG -- RUNNING SAVE IMAGE AS");
 
 
 
@@ -591,7 +595,7 @@ public class paint_2 extends Application {
 
                     }
                     else {
-                        System.out.println("ERROR -- Cannot erase initial temp Image");
+                        logger.severe("ERROR -- Cannot erase initial temp Image");
                     }
 
 
@@ -605,7 +609,7 @@ public class paint_2 extends Application {
                 aE -> {
                     File file = new File("src/main/Release-Notes.md");
                     if (file.exists()){
-                        System.out.println("DEBUG -- file exists");
+                        logger.info("DEBUG -- file exists");
                         Desktop desktop = Desktop.getDesktop();
                         try {
                             desktop.open(file);
@@ -613,7 +617,7 @@ public class paint_2 extends Application {
                             e.printStackTrace();
                         }
                     }
-                    else System.out.println("file does not exist");
+                    else logger.warning("file does not exist");
                 }
         );
 
@@ -750,7 +754,7 @@ public class paint_2 extends Application {
         textW.setOnAction(
                 aE -> {
                     char[] c = textW.getText().toCharArray();
-                    System.out.println(String.valueOf(c));
+                    logger.info(String.valueOf(c));
                     boolean hasDecimal = false;
                     for (int i = 0; i < c.length; i++){
                         if (!Character.isDigit(c[i])){
@@ -770,7 +774,7 @@ public class paint_2 extends Application {
                                 c = Arrays.copyOfRange(c, 0, c.length - 1);
                                 i--;
                             }
-                            System.out.println(String.valueOf(c));
+                            logger.info(String.valueOf(c));
 
                         }
 
@@ -964,21 +968,21 @@ public class paint_2 extends Application {
                                     }
 
                                     if(e.getEventType() == MouseEvent.MOUSE_CLICKED){
-                                        System.out.println("Mouse Pressed -- points =" + dHandler.getPoints() + "/3");
+                                        logger.info("Mouse Pressed -- points =" + dHandler.getPoints() + "/3");
 
                                         if (dHandler.getPoints() < 3){ // If this is not the third click
-                                            System.out.println("We in it now\n" +
-                                                    e.getX() + ", " + e.getY());
+                                            //logger.info("We in it now\n" +
+                                            //        e.getX() + ", " + e.getY());
                                             dHandler.pX[dHandler.getPoints() - 1] = e.getX();
                                             dHandler.pY[dHandler.getPoints() - 1] = e.getY();
-                                            System.out.println(dHandler.getPoints());
+                                            //System.out.println(dHandler.getPoints());
                                             dHandler.setPoints(dHandler.getPoints() + 1);
-                                            System.out.println(dHandler.getPoints());
+                                            //System.out.println(dHandler.getPoints());
                                         }
                                         else {
                                             dHandler.pX[2] = e.getX();
                                             dHandler.pY[2] = e.getY();
-                                            System.out.println("Point " + dHandler.getPoints() + "\n" +
+                                            logger.info("Point " + dHandler.getPoints() + "\n" +
                                                     "tX = [" + dHandler.pX[0] + "," + dHandler.pX[1] + "," + dHandler.pX[2] + "]\n" +
                                                     "tY = [" + dHandler.pY[0] + "," + dHandler.pY[1] + "," + dHandler.pY[2] + "]");
                                             FXC.setFill(dHandler.getCurrentColor());
@@ -1228,19 +1232,35 @@ public class paint_2 extends Application {
      * @return File
      */
     public static File openImage(Stage stage){
-        FileChooser f = new FileChooser();
-        f.setTitle("Open Image");
+        FileChooser fChooser = new FileChooser();
+        fChooser.setTitle("Open Image");
 
-        File init = new File("src/main/images");
-        f.setInitialDirectory(init);
-        f.getExtensionFilters().addAll(
+        String imageDir = "";
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
+        else {
+            String userDir = System.getProperty("user.home");
+            logger.info("User Directory = " + userDir);
+            File userDirF = new File(userDir);
+            if (!userDirF.canRead()) {
+                logger.info("Cannot read " + userDirF.getAbsolutePath());
+                logger.info("Trying to create folder");
+                userDirF = new File("c:/");
+            }
+
+            imageDir = userDirF.getPath() + "/Documents/Images";
+        }
+        logger.info("Initial Directory = " + imageDir);
+        File init = new File(imageDir);
+        fChooser.setInitialDirectory(init);
+        fChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("All Images", "*.*"),
                 new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
                 new FileChooser.ExtensionFilter("PNG", "*.png"),
                 new FileChooser.ExtensionFilter("BMP", "*.bmp"),
                 new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
         );
-        return f.showOpenDialog(stage);
+        File saveFile = fChooser.showOpenDialog(stage);
+        return saveFile;
 
     }
 
@@ -1248,10 +1268,26 @@ public class paint_2 extends Application {
      * Launches a FileChooser explorer for saving an Image
      */
     public static File saveImage(Stage stage, File initial){
+
         FileChooser fChooser = new FileChooser();
         fChooser.setTitle("Save Image");
-        //fChooser.setInitialDirectory(initial);
-        File init = new File("src/main/images");
+
+        String imageDir = "";
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
+        else {
+            String userDir = System.getProperty("user.home");
+            logger.info("User Directory = " + userDir);
+            File userDirF = new File(userDir);
+            if (!userDirF.canRead()) {
+                logger.info("Cannot read " + userDirF.getAbsolutePath());
+                logger.info("Trying to create folder");
+                userDirF = new File("c:/");
+            }
+
+            imageDir = userDirF.getPath() + "/Documents/Images";
+        }
+        logger.info("Initial Directory = " + imageDir);
+        File init = new File(imageDir);
         fChooser.setInitialDirectory(init);
         fChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("All Images", "*.*"),
@@ -1261,9 +1297,11 @@ public class paint_2 extends Application {
                 new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
         );
 
-        if (fChooser.showSaveDialog(stage) != null) return fChooser.showSaveDialog(stage);
+        File saveFile = fChooser.showSaveDialog(stage);
+
+        if (saveFile != null) return saveFile;
         else {
-            System.out.println("ERROR -- returned file is Null!");
+            logger.severe("ERROR -- returned file is Null!");
             return null;
         }
 
@@ -1272,7 +1310,7 @@ public class paint_2 extends Application {
     public static void saveImageAs(Canvas canvas, File file){
 
         try{
-            System.out.println("SYSTEM Save Image As w/ " + file.getAbsolutePath());
+            logger.info("SYSTEM Save Image As w/ " + file.getAbsolutePath());
             WritableImage wImage = new WritableImage((int) canvas.getWidth(),
                     (int) canvas.getHeight());
             canvas.snapshot(null, wImage);
@@ -1300,11 +1338,11 @@ public class paint_2 extends Application {
         } catch (IOException e) {
             e.printStackTrace();
             // Error LOG
-            System.out.println("ERROR SAVING \n" + e);
+            logger.warning("ERROR SAVING \n" + e);
         } catch (NullPointerException ex) {
             ex.printStackTrace();
             // Error LOG
-            System.out.println("ERROR SAVING (NULLPOINTER \n" + ex);
+            logger.warning("ERROR SAVING (NULLPOINTER \n" + ex);
         }
 
 
@@ -1350,7 +1388,7 @@ public class paint_2 extends Application {
 
     public void newTempFiles(Canvas c, Path d, File f, ImageHandler iH) throws IOException {
         clearTempFiles(d);
-        System.out.println(f.getAbsolutePath());
+        logger.info(f.getAbsolutePath());
         iH.newTempList(f);
         saveImageAs(c, iH.getOriginalImage());
     }
@@ -1374,8 +1412,12 @@ public class paint_2 extends Application {
      * launches Pain(T)
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        logger.addHandler(sH);
+        logger.setLevel(Level.ALL);
+        logger.info("test");
         launch();
+
     }
 
 }
