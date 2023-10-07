@@ -909,10 +909,12 @@ public class paint_2 extends Application {
                                 //} catch (IOException ex) {
                                 //    throw new RuntimeException(ex);
                                 //}
-                            } else if (e.getEventType() == MouseEvent.MOUSE_RELEASED){
+                            } else if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
                                 FXC.beginPath();
                                 FXC.moveTo(e.getX(), e.getY());
                                 FXC.stroke();
+                            }
+                            else if (e.getEventType() == MouseEvent.MOUSE_RELEASED) {
 
                                 try {
                                     pushTempFile(canvas, tempDir, iHandler);
@@ -1401,6 +1403,8 @@ public class paint_2 extends Application {
         }
         Platform.exit();
     }
+
+
 
     /* aboutPop
      * Opens a new Scene with About information

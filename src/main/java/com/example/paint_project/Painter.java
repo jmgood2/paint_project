@@ -90,6 +90,7 @@ public class Painter extends Application {
     private MenuItem closeI;
     private MenuItem exit;
     private MenuItem undo;
+    private MenuItem redo;
     private MenuItem notes;
     private MenuItem about;
     private MenuItem thinW;
@@ -228,6 +229,9 @@ public class Painter extends Application {
         exit.setAccelerator(KeyCombination.keyCombination("F4"));
 
         undo = new MenuItem("Undo");
+        undo.setAccelerator(KeyCombination.keyCombination("Shortcut+Z"));
+        redo = new MenuItem("Redo");
+        redo.setAccelerator(KeyCombination.keyCombination("Shortcut+Y"));
 
         notes = new MenuItem("Release Notes");
         about = new MenuItem("About");
@@ -315,6 +319,7 @@ public class Painter extends Application {
         menuF.getItems().add(exit);
 
         editM.getItems().add(undo);
+        editM.getItems().add(redo);
 
         helpM.getItems().add(notes);
         helpM.getItems().add(about);
@@ -595,51 +600,20 @@ public class Painter extends Application {
                 }
         );
 
-        //Undo action - Currently permanent
-        // TODO Make it so we can undo AND redo
-        // TODO Modify Drawing to save edits to temp directory
+        //Undo action
+        // TODO Modify Drawing to erase temp files when redo + new draw (delete temp files AND pop off tempImage list
         undo.setOnAction(
                 aE -> {
-                    // Make sure we don't accidentally erase the original temp image
-                    if (iHandler.getLatestTempImage() != iHandler.getOriginalImage()) {
-                        try {
-                            Files.delete(iHandler.getLatestTempImage().toPath());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        iHandler.backTempImage();
-                        iHandler.setCurrentImageFile(iHandler.getLatestTempImage());
-
-
-                        Image image = null;
-                        try {
-                            image = iHandler.getImage(iHandler.getLatestTempImage());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        // Set canvas to old values
-                        canvas.setHeight(image.getHeight());
-                        canvas.setWidth(image.getWidth());
-
-                        FXC.clearRect(
-                                0, 0,
-                                canvas.getWidth(),
-                                canvas.getHeight());
-
-                        FXC.drawImage(image,
-                                0,
-                                0);
-
-                    }
-                    else {
-                        System.out.println("ERROR -- Cannot erase initial temp Image");
-                    }
-
-
-
-
+                    undo();
                 }
+        );
+
+        // Redo action
+        redo.setOnAction(
+                aE -> {
+                    redo();
+
+            }
         );
 
         // OPEN release notes
@@ -943,12 +917,12 @@ public class Painter extends Application {
                                             5);
 
                                 }
-                                try {
-                                    pushTempFile(canvas, tempDir, iHandler);
-                                } catch (IOException ex) {
-                                    throw new RuntimeException(ex);
-                                }
-                            } else if (e.getEventType() == MouseEvent.MOUSE_PRESSED){
+                                //try {
+                                //    pushTempFile(canvas, tempDir, iHandler);
+                                //} catch (IOException ex) {
+                                //    throw new RuntimeException(ex);
+                                //}
+                            } else if (e.getEventType() == MouseEvent.MOUSE_RELEASED){
                                 FXC.beginPath();
                                 FXC.moveTo(e.getX(), e.getY());
                                 FXC.stroke();
@@ -1441,6 +1415,69 @@ public class Painter extends Application {
         Platform.exit();
     }
 
+    public void undo(){
+        // Make sure we don't accidentally erase the original temp image
+        if (iHandler.getLatestTempImage() != iHandler.getOriginalImage()) {
+            //try {
+            //    Files.delete(iHandler.getLatestTempImage().toPath());
+            //} catch (IOException e) {
+            //    e.printStackTrace();
+            //}
+            iHandler.backTempImage();
+            iHandler.setCurrentImageFile(iHandler.getLatestTempImage());
+
+
+            Image image = null;
+            try {
+                image = iHandler.getImage(iHandler.getLatestTempImage());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Set canvas to old values
+            canvas.setHeight(image.getHeight());
+            canvas.setWidth(image.getWidth());
+
+            FXC.clearRect(
+                    0, 0,
+                    canvas.getWidth(),
+                    canvas.getHeight());
+
+            FXC.drawImage(image,
+                    0,
+                    0);
+
+        }
+        else {
+            System.out.println("ERROR -- Cannot erase initial temp Image");
+        }
+    }
+
+    public void redo(){
+        iHandler.nextTempImage();
+        iHandler.setCurrentImageFile(iHandler.getLatestTempImage());
+
+
+        Image image = null;
+        try {
+            image = iHandler.getImage(iHandler.getLatestTempImage());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Set canvas to old values
+        canvas.setHeight(image.getHeight());
+        canvas.setWidth(image.getWidth());
+
+        FXC.clearRect(
+                0, 0,
+                canvas.getWidth(),
+                canvas.getHeight());
+
+        FXC.drawImage(image,
+                0,
+                0);
+    }
 
     /* aboutPop
      * Opens a new Scene with About information

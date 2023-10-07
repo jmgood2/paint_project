@@ -10,6 +10,8 @@ import java.util.*;
 
 // Class for handling images in a Map
 public class ImageHandler {
+    // Iterator for cycling through the TempImagesList
+    private int tempIterator;
     // Map for image file (key) and Image object (value)
     private Map<File, Image> imageMap;
     // List of currently open images
@@ -23,6 +25,7 @@ public class ImageHandler {
 
     // Constructors
     public ImageHandler(){
+        tempIterator = 0;
         openImage = null;
         imageMap = new HashMap<>();
         openImagesFileList = new ArrayList<>();
@@ -32,6 +35,7 @@ public class ImageHandler {
     }
 
     public ImageHandler(File f) throws IOException {
+        tempIterator = 0;
         openImage = null;
         imageMap = new HashMap<>();
         openImagesFileList = new ArrayList<>();
@@ -43,6 +47,7 @@ public class ImageHandler {
     }
 
     public ImageHandler(Map<File, Image> map){
+        tempIterator = 0;
         openImage = null;
         imageMap = map;
         openImagesFileList = new ArrayList<>();
@@ -53,6 +58,7 @@ public class ImageHandler {
 
 
     public ImageHandler(Map<File, Image> map, List<File> list){
+        tempIterator = 0;
         openImage = null;
         imageMap = map;
         openImagesFileList = list;
@@ -125,13 +131,20 @@ public class ImageHandler {
 
     public void addTempImage(File f){
         tempImagesList.add(f);
+        tempIterator++;
     }
 
     public void backTempImage(){
-        if (tempImagesList.size() > 1) {
-            tempImagesList.remove(tempImagesList.size() -1);
-        }
-        else System.out.println("ERROR -- Unable to remove Temp Image from List");
+        //if (tempImagesList.size() > 1) {
+        //    tempImagesList.remove(tempImagesList.size() -1);
+        //}
+        //else System.out.println("ERROR -- Unable to remove Temp Image from List");
+
+        tempIterator--;
+    }
+    public void nextTempImage(){
+        if (tempIterator < (tempImagesList.size() -1)) tempIterator++;
+        else System.out.println("ERRROR Already at last temp image");
     }
 
     public void clearTempList(){
@@ -178,7 +191,13 @@ public class ImageHandler {
     }
 
     public File getLatestTempImage(){
-        return tempImagesList.get(tempImagesList.size() -1);
+        //return tempImagesList.get(tempImagesList.size() -1);
+        return tempImagesList.get(tempIterator);
+    }
+
+    public File getNextTempImage(){
+        tempIterator ++;
+        return getLatestTempImage();
     }
 
     public File getOriginalImage(){
