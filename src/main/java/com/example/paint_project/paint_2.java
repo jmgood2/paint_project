@@ -8,6 +8,7 @@
 package com.example.paint_project;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -903,10 +904,21 @@ public class paint_2 extends Application {
                                             5);
 
                                 }
-                            } else if (e.getEventType() == MouseEvent.MOUSE_PRESSED){
+                                //try {
+                                //    pushTempFile(canvas, tempDir, iHandler);
+                                //} catch (IOException ex) {
+                                //    throw new RuntimeException(ex);
+                                //}
+                            } else if (e.getEventType() == MouseEvent.MOUSE_RELEASED){
                                 FXC.beginPath();
                                 FXC.moveTo(e.getX(), e.getY());
                                 FXC.stroke();
+
+                                try {
+                                    pushTempFile(canvas, tempDir, iHandler);
+                                } catch (IOException ex) {
+                                    throw new RuntimeException(ex);
+                                }
                             }
                         }
                         case LINE -> {
@@ -927,6 +939,12 @@ public class paint_2 extends Application {
                                             e.getY());
                                     dHandler.setPosA(0, 0);
                                     dHandler.click();
+
+                                    try {
+                                        pushTempFile(canvas, tempDir, iHandler);
+                                    } catch (IOException ex) {
+                                        throw new RuntimeException(ex);
+                                    }
 
 
                                 }
@@ -990,6 +1008,12 @@ public class paint_2 extends Application {
 
                                             dHandler.setShapeType(ShapeType.NONE);
                                             shapeSelect.getSelectedToggle().setSelected(false);
+
+                                            try {
+                                                pushTempFile(canvas, tempDir, iHandler);
+                                            } catch (IOException ex) {
+                                                throw new RuntimeException(ex);
+                                            }
                                         }
 
                                     }
@@ -1044,6 +1068,12 @@ public class paint_2 extends Application {
 
                                             dHandler.setShapeType(ShapeType.NONE);
                                             shapeSelect.getSelectedToggle().setSelected(false);
+
+                                            try {
+                                                pushTempFile(canvas, tempDir, iHandler);
+                                            } catch (IOException ex) {
+                                                throw new RuntimeException(ex);
+                                            }
 
                                         }
                                     }
@@ -1101,6 +1131,12 @@ public class paint_2 extends Application {
                                             dHandler.setShapeType(ShapeType.NONE);
                                             shapeSelect.getSelectedToggle().setSelected(false);
 
+                                            try {
+                                                pushTempFile(canvas, tempDir, iHandler);
+                                            } catch (IOException ex) {
+                                                throw new RuntimeException(ex);
+                                            }
+
 
                                         }
 
@@ -1155,6 +1191,12 @@ public class paint_2 extends Application {
 
                                             dHandler.setShapeType(ShapeType.NONE);
                                             shapeSelect.getSelectedToggle().setSelected(false);
+
+                                            try {
+                                                pushTempFile(canvas, tempDir, iHandler);
+                                            } catch (IOException ex) {
+                                                throw new RuntimeException(ex);
+                                            }
                                         }
                                     }
 
@@ -1198,6 +1240,12 @@ public class paint_2 extends Application {
 
                                             dHandler.setShapeType(ShapeType.NONE);
                                             shapeSelect.getSelectedToggle().setSelected(false);
+
+                                            try {
+                                                pushTempFile(canvas, tempDir, iHandler);
+                                            } catch (IOException ex) {
+                                                throw new RuntimeException(ex);
+                                            }
 
                                         }
                                     }
@@ -1344,15 +1392,15 @@ public class paint_2 extends Application {
     }
 
 
-public void closePaint(ImageHandler iH, Path temp){
+    public void closePaint(ImageHandler iH, Path temp){
 
-    try {
-        clearTemp(new File(temp.toString()), iH);
-    } catch (IOException e) {
-        e.printStackTrace();
+        try {
+            clearTemp(new File(temp.toString()), iH);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Platform.exit();
     }
-    System.exit(0);
-}
 
     /* aboutPop
      * Opens a new Scene with About information
@@ -1402,6 +1450,16 @@ public void closePaint(ImageHandler iH, Path temp){
         saveImageAs(c, iH.getOriginalImage());
     }
 
+    public void pushTempFile(Canvas c, Path d, ImageHandler iH) throws IOException {
+        File f = new File(String.valueOf(Files.createTempFile(
+                d,
+                null,
+                iH.getOriginalImage().getPath().substring(
+                        iH.getOriginalImage().getPath().lastIndexOf(".")
+                ))));
+        iH.addTempImage(f);
+        saveImageAs(c, f);
+    }
     public void clearTempFiles(Path d) throws IOException {
         File tempDir = new File(d.toString());
         File[] tempFiles = tempDir.listFiles();

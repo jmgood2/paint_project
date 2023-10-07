@@ -1,6 +1,7 @@
 package com.example.paint_project;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -42,7 +43,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
+
 public class Painter extends Application {
+    // Logging Utilities
+    private static Logger logger;
+    private static StreamHandler streamH;
     // Private Variables
 
     int[] picker;
@@ -132,7 +141,9 @@ public class Painter extends Application {
 
 
     //Constructor
-    public Painter(Stage stage) throws IOException {
+    @Override
+    public void start(Stage stage) throws IOException {
+
         // Variables
         picker = new int[2];
         canvasH = 500;
@@ -161,6 +172,14 @@ public class Painter extends Application {
 
         // Imageview Setup
 
+
+
+        // Canvas
+        canvas = new Canvas();
+
+        // Canvas Setup
+        canvas.setHeight(canvasH);
+        canvas.setWidth(canvasW);
 
         // Shapes
         pickerColor = new Rectangle(20, 20);
@@ -263,6 +282,13 @@ public class Painter extends Application {
 
         colorPicker.setPrefSize(55, 40);
 
+
+        // Panes
+        buttonGrid = new GridPane();
+        shapeGrid = new GridPane();
+        borderRoot = new BorderPane();
+        canvasPane = new ScrollPane(canvas);
+
         // Groups
         menuB = new MenuBar(menuF, editM, helpM);
         buttons = new ToggleGroup();
@@ -355,18 +381,6 @@ public class Painter extends Application {
 
         // HBoxes
 
-        // Canvas
-        canvas = new Canvas();
-
-        // Canvas Setup
-        canvas.setHeight(canvasH);
-        canvas.setWidth(canvasW);
-        // Panes
-        buttonGrid = new GridPane();
-        shapeGrid = new GridPane();
-        borderRoot = new BorderPane();
-        canvasPane = new ScrollPane(canvas);
-
 
         // Create Panes
         // ButtonGrid
@@ -421,6 +435,11 @@ public class Painter extends Application {
                 Screen.getPrimary().getVisualBounds().getWidth(),
                 Screen.getPrimary().getVisualBounds().getHeight());
 
+        // Create Stage
+        stage.setTitle("Paint (t) 2.0");
+        stage.setMaximized(true);
+        stage.setScene(baseScene);
+        stage.show();
 
 
         // GraphicsContext
@@ -572,12 +591,7 @@ public class Painter extends Application {
         // EXIT program
         exit.setOnAction(
                 aE -> {
-                    try {
-                        clearTemp(new File(tempDir.toString()), iHandler);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    System.exit(0);
+                    closePaint(iHandler, tempDir);
                 }
         );
 
@@ -1288,22 +1302,7 @@ public class Painter extends Application {
 
 
     }
-    @Override
-    public void start(Stage stage) throws IOException {
 
-        // Create Stage
-        stage.setTitle("Paint (t) 2.0");
-        stage.setMaximized(true);
-
-
-        stage.setScene(baseScene);
-
-        stage.show();
-
-
-
-
-    }
 
     /**************************
      * METHODS
@@ -1316,19 +1315,35 @@ public class Painter extends Application {
      * @return File
      */
     public static File openImage(Stage stage){
-        FileChooser f = new FileChooser();
-        f.setTitle("Open Image");
+        FileChooser fChooser = new FileChooser();
+        fChooser.setTitle("Open Image");
 
-        File init = new File("src/main/images");
-        f.setInitialDirectory(init);
-        f.getExtensionFilters().addAll(
+        String imageDir = "";
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
+        else {
+            String userDir = System.getProperty("user.home");
+            logger.info("User Directory = " + userDir);
+            File userDirF = new File(userDir);
+            if (!userDirF.canRead()) {
+                logger.info("Cannot read " + userDirF.getAbsolutePath());
+                logger.info("Trying to create folder");
+                userDirF = new File("c:/");
+            }
+
+            imageDir = userDirF.getPath() + "/Documents/Images";
+        }
+        logger.info("Initial Directory = " + imageDir);
+        File init = new File(imageDir);
+        fChooser.setInitialDirectory(init);
+        fChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("All Images", "*.*"),
                 new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
                 new FileChooser.ExtensionFilter("PNG", "*.png"),
                 new FileChooser.ExtensionFilter("BMP", "*.bmp"),
                 new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
         );
-        return f.showOpenDialog(stage);
+        File saveFile = fChooser.showOpenDialog(stage);
+        return saveFile;
 
     }
 
@@ -1336,10 +1351,26 @@ public class Painter extends Application {
      * Launches a FileChooser explorer for saving an Image
      */
     public static File saveImage(Stage stage, File initial){
+
         FileChooser fChooser = new FileChooser();
         fChooser.setTitle("Save Image");
-        //fChooser.setInitialDirectory(initial);
-        File init = new File("src/main/images");
+
+        String imageDir = "";
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
+        else {
+            String userDir = System.getProperty("user.home");
+            logger.info("User Directory = " + userDir);
+            File userDirF = new File(userDir);
+            if (!userDirF.canRead()) {
+                logger.info("Cannot read " + userDirF.getAbsolutePath());
+                logger.info("Trying to create folder");
+                userDirF = new File("c:/");
+            }
+
+            imageDir = userDirF.getPath() + "/Documents/Images";
+        }
+        logger.info("Initial Directory = " + imageDir);
+        File init = new File(imageDir);
         fChooser.setInitialDirectory(init);
         fChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("All Images", "*.*"),
@@ -1349,9 +1380,11 @@ public class Painter extends Application {
                 new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
         );
 
-        if (fChooser.showSaveDialog(stage) != null) return fChooser.showSaveDialog(stage);
+        File saveFile = fChooser.showSaveDialog(stage);
+
+        if (saveFile != null) return saveFile;
         else {
-            System.out.println("ERROR -- returned file is Null!");
+            logger.severe("ERROR -- returned file is Null!");
             return null;
         }
 
@@ -1360,7 +1393,7 @@ public class Painter extends Application {
     public static void saveImageAs(Canvas canvas, File file){
 
         try{
-            System.out.println("SYSTEM Save Image As w/ " + file.getAbsolutePath());
+            logger.info("SYSTEM Save Image As w/ " + file.getAbsolutePath());
             WritableImage wImage = new WritableImage((int) canvas.getWidth(),
                     (int) canvas.getHeight());
             canvas.snapshot(null, wImage);
@@ -1388,17 +1421,25 @@ public class Painter extends Application {
         } catch (IOException e) {
             e.printStackTrace();
             // Error LOG
-            System.out.println("ERROR SAVING \n" + e);
+            logger.warning("ERROR SAVING \n" + e);
         } catch (NullPointerException ex) {
             ex.printStackTrace();
             // Error LOG
-            System.out.println("ERROR SAVING (NULLPOINTER \n" + ex);
+            logger.warning("ERROR SAVING (NULLPOINTER \n" + ex);
         }
 
 
     }
 
+    public void closePaint(ImageHandler iH, Path temp){
 
+        try {
+            clearTemp(new File(temp.toString()), iH);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Platform.exit();
+    }
 
 
     /* aboutPop
@@ -1463,6 +1504,22 @@ public class Painter extends Application {
                 else Files.delete(Paths.get(f.getPath()));
             }
         }
+    }
+
+    /* main method
+     * launches Pain(T)
+     * @param args
+     */
+    public static void main(String[] args) throws IOException {
+        // Logging Utilies
+        logger = Logger.getLogger("Paint");
+        streamH = new StreamHandler(System.out, new SimpleFormatter());
+
+        logger.addHandler(streamH);
+        logger.setLevel(Level.ALL);
+        logger.info("test");
+        launch();
+
     }
 
 
