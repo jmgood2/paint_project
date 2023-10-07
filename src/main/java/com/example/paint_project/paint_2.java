@@ -548,12 +548,7 @@ public class paint_2 extends Application {
         // EXIT program
         exit.setOnAction(
                 aE -> {
-                    try {
-                        clearTemp(new File(tempDir.toString()), iHandler);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    System.exit(0);
+                    closePaint(iHandler, tempDir);
                 }
         );
 
@@ -1349,7 +1344,15 @@ public class paint_2 extends Application {
     }
 
 
+public void closePaint(ImageHandler iH, Path temp){
 
+    try {
+        clearTemp(new File(temp.toString()), iH);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    System.exit(0);
+}
 
     /* aboutPop
      * Opens a new Scene with About information
@@ -1372,12 +1375,18 @@ public class paint_2 extends Application {
     public void clearTemp(File tempDir, ImageHandler iH) throws IOException {
         iH.clearTempList();
         File[] tempFiles = tempDir.listFiles();
+        String tempString = "Files in Temp Image Directory:\n";
+
+
         if (tempFiles != null) {
-            for (File f: tempFiles){
+            for (File f : tempFiles){
+                tempString = tempString + f.getPath() + "\n";
                 if (f.isDirectory()) clearTemp(f);
                 else Files.delete(Paths.get(f.getPath()));
             }
+            logger.info("Deleting " + tempString);
         }
+        else logger.warning(tempDir.getPath() + " is empty!");
         Files.delete(Paths.get(tempDir.getPath()));
     }
 
