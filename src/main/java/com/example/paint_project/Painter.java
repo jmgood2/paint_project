@@ -896,6 +896,10 @@ public class Painter extends Application {
                     FXC.setLineWidth(dHandler.getLineWidth());
                     switch (dHandler.getDrawType()) {
                         case FREE -> {
+                            if (dHandler.isFirstClick()){
+                                FXC.beginPath();
+                                dHandler.click();
+                            }
                             //System.out.println("FREE");
                             if (e.getEventType() == MouseEvent.MOUSE_DRAGGED) {
                                 if (e.isPrimaryButtonDown()) {
@@ -904,6 +908,7 @@ public class Painter extends Application {
                                             e.getY() - 3,
                                             5,
                                             5);*/
+                                    //FXC.beginPath();
                                     FXC.lineTo(e.getX(), e.getY());
                                     FXC.stroke();
 
@@ -926,6 +931,7 @@ public class Painter extends Application {
                                 FXC.beginPath();
                                 FXC.moveTo(e.getX(), e.getY());
                                 FXC.stroke();
+                                if (!dHandler.isFirstClick()) dHandler.click();
 
                                 try {
                                     pushTempFile(canvas, tempDir, iHandler);
