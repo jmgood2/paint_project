@@ -1,15 +1,32 @@
 package com.example.paint_project;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
+import java.util.logging.Logger;
 
 // Class for handling images in a Map
 public class ImageHandler {
+    // Flags
+    private boolean isSaved;
+    private boolean isPainting;
+    private boolean isUndone;
     // Iterator for cycling through the TempImagesList
     private int tempIterator;
     // Map for image file (key) and Image object (value)
@@ -25,6 +42,10 @@ public class ImageHandler {
 
     // Constructors
     public ImageHandler(){
+        // Flags
+        isSaved = false;
+        isPainting = false;
+        isUndone = false;
         tempIterator = 0;
         openImage = null;
         imageMap = new HashMap<>();
@@ -35,6 +56,10 @@ public class ImageHandler {
     }
 
     public ImageHandler(File f) throws IOException {
+        // Flags
+        isSaved = false;
+        isPainting = false;
+        isUndone = false;
         tempIterator = 0;
         openImage = null;
         imageMap = new HashMap<>();
@@ -47,6 +72,10 @@ public class ImageHandler {
     }
 
     public ImageHandler(Map<File, Image> map){
+        // Flags
+        isSaved = false;
+        isPainting = false;
+        isUndone = false;
         tempIterator = 0;
         openImage = null;
         imageMap = map;
@@ -58,6 +87,10 @@ public class ImageHandler {
 
 
     public ImageHandler(Map<File, Image> map, List<File> list){
+        // Flags
+        isSaved = false;
+        isPainting = false;
+        isUndone = false;
         tempIterator = 0;
         openImage = null;
         imageMap = map;
@@ -143,13 +176,256 @@ public class ImageHandler {
         tempIterator--;
     }
     public void nextTempImage(){
-        if (tempIterator < (tempImagesList.size() -1)) tempIterator++;
+        if (tempIterator < (tempImagesList.size())) tempIterator++;
         else System.out.println("ERRROR Already at last temp image");
     }
 
     public void clearTempList(){
         tempImagesList.clear();
+        
     }
+
+    public void clearTemp(File tempDir) throws IOException {
+        this.clearTempList();
+        File[] tempFiles = tempDir.listFiles();
+        if (tempFiles != null) {
+            for (File f: tempFiles){
+                if (f.isDirectory()) this.clearTemp(f);
+                else Files.delete(Paths.get(f.getPath()));
+            }
+        }
+        Files.delete(Paths.get(tempDir.getPath()));
+    }
+
+
+
+    public void newTempFiles(Canvas c, Path d, File f) throws IOException {
+        clearTempFiles(d);
+        System.out.println(f.getAbsolutePath());
+        this.newTempList(f);
+        ImageHandler.saveImageAs(c, this.getOriginalImage());
+    }
+
+    public void pushTempFile(Canvas c, Path d) throws IOException {
+        File f = new File(String.valueOf(Files.createTempFile(
+                d,
+                null,
+                this.getOriginalImage().getPath().substring(
+                        this.getOriginalImage().getPath().lastIndexOf(".")
+                ))));
+        this.addTempImage(f);
+        ImageHandler.saveImageAs(c, f);
+    }
+
+    public void clearTempFiles(Path d) throws IOException {
+        File tempDir = new File(d.toString());
+        File[] tempFiles = tempDir.listFiles();
+        if (tempFiles != null) {
+            for (File f: tempFiles){
+                if (f.isDirectory()) clearTempFiles(f.toPath());
+                else Files.delete(Paths.get(f.getPath()));
+            }
+        }
+    }
+
+    public void popTemp() throws IOException{
+        while (tempIterator < (tempImagesList.size() - 1)){
+            Files.delete(Paths.get(tempImagesList.get(tempImagesList.size() - 1).getPath()));
+            tempImagesList.remove(tempImagesList.size() -1);
+        }
+    }
+
+    public static File openImage(Stage stage){
+        Logger logger = Logger.getLogger("Paint");
+        FileChooser fChooser = new FileChooser();
+        fChooser.setTitle("Open Image");
+
+        String imageDir = "";
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
+        else {
+            String userDir = System.getProperty("user.home");
+            logger.info("User Directory = " + userDir);
+            File userDirF = new File(userDir);
+            if (!userDirF.canRead()) {
+                logger.info("Cannot read " + userDirF.getAbsolutePath());
+                logger.info("Trying to create folder");
+                userDirF = new File("c:/");
+            }
+
+            imageDir = userDirF.getPath() + "/Documents/Images";
+        }
+        logger.info("Initial Directory = " + imageDir);
+        File init = new File(imageDir);
+        fChooser.setInitialDirectory(init);
+        fChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("All Images", "*.*"),
+                new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("BMP", "*.bmp"),
+                new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
+        );
+        File saveFile = fChooser.showOpenDialog(stage);
+        return saveFile;
+
+    }
+
+    /* saveImage
+     * Launches a FileChooser explorer for saving an Image
+     */
+    public static File saveImage(Stage stage, File initial){
+        Logger logger = Logger.getLogger("Paint");
+
+        FileChooser fChooser = new FileChooser();
+        fChooser.setTitle("Save Image");
+
+        String imageDir = "";
+        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
+        else {
+            String userDir = System.getProperty("user.home");
+            logger.info("User Directory = " + userDir);
+            File userDirF = new File(userDir);
+            if (!userDirF.canRead()) {
+                logger.info("Cannot read " + userDirF.getAbsolutePath());
+                logger.info("Trying to create folder");
+                userDirF = new File("c:/");
+            }
+
+            imageDir = userDirF.getPath() + "/Documents/Images";
+        }
+        logger.info("Initial Directory = " + imageDir);
+        File init = new File(imageDir);
+        fChooser.setInitialDirectory(init);
+        fChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("All Images", "*.*"),
+                new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("BMP", "*.bmp"),
+                new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
+        );
+
+        File saveFile = fChooser.showSaveDialog(stage);
+
+        if (saveFile != null) return saveFile;
+        else {
+            logger.severe("ERROR -- returned file is Null!");
+            return null;
+        }
+
+    }
+
+    public static void saveImageAs(Canvas canvas, File file){
+        Logger logger = Logger.getLogger("Paint");
+
+        try{
+            logger.info("SYSTEM Save Image As w/ " + file.getAbsolutePath());
+            WritableImage wImage = new WritableImage((int) canvas.getWidth(),
+                    (int) canvas.getHeight());
+            canvas.snapshot(null, wImage);
+
+            BufferedImage bImage1 = SwingFXUtils.fromFXImage(wImage, null);
+            String ext = file.getPath().substring(file.getPath().lastIndexOf(".") + 1);
+
+            BufferedImage bImage2 = bImage1;
+
+            if (ext.equals("jpg") || ext.equals("jpeg")){
+                bImage2 = new BufferedImage(
+                        bImage1.getWidth(),
+                        bImage1.getHeight(),
+                        BufferedImage.OPAQUE);
+            }
+            Graphics2D graphics = bImage2.createGraphics();
+            graphics.drawImage(bImage1, 0, 0, null);
+
+            ImageIO.write(bImage2,
+                    ext,
+                    file);
+            graphics.dispose();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Error LOG
+            logger.warning("ERROR SAVING \n" + e);
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
+            // Error LOG
+            logger.warning("ERROR SAVING (NULLPOINTER \n" + ex);
+        }
+
+
+    }
+
+    public Canvas undo(Canvas canvas){
+        // Make sure we don't accidentally erase the original temp image
+        if (this.getLatestTempImage() != this.getOriginalImage()) {
+            this.backTempImage();
+            this.setCurrentImageFile(this.getLatestTempImage());
+
+            GraphicsContext FXC = canvas.getGraphicsContext2D();
+
+            Image image = null;
+            try {
+                image = this.getImage(this.getLatestTempImage());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Set canvas to old values
+            canvas.setHeight(image.getHeight());
+            canvas.setWidth(image.getWidth());
+
+            FXC.clearRect(
+                    0, 0,
+                    canvas.getWidth(),
+                    canvas.getHeight());
+
+            FXC.drawImage(image,
+                    0,
+                    0);
+            isUndone = true;
+
+        }
+        else {
+
+            System.out.println("ERROR -- Cannot erase initial temp Image");
+        }
+
+        return canvas;
+    }
+
+    public Canvas redo(Canvas canvas){
+        this.nextTempImage();
+        if (tempIterator == (tempImagesList.size() -1)) isUndone = false;
+        else {
+            this.setCurrentImageFile(this.getLatestTempImage());
+
+            GraphicsContext FXC = canvas.getGraphicsContext2D();
+
+
+            Image image = null;
+            try {
+                image = this.getImage(this.getLatestTempImage());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Set canvas to old values
+            canvas.setHeight(image.getHeight());
+            canvas.setWidth(image.getWidth());
+
+            FXC.clearRect(
+                    0, 0,
+                    canvas.getWidth(),
+                    canvas.getHeight());
+
+            FXC.drawImage(image,
+                    0,
+                    0);
+        }
+        return canvas;
+    }
+
+
 
     // SETTERS
     public void setCurrentImageFile(File f){
@@ -192,7 +468,7 @@ public class ImageHandler {
 
     public File getLatestTempImage(){
         //return tempImagesList.get(tempImagesList.size() -1);
-        return tempImagesList.get(tempIterator);
+        return tempImagesList.get(tempIterator - 1);
     }
 
     public File getNextTempImage(){
@@ -219,7 +495,18 @@ public class ImageHandler {
         return snapshot.getPixelReader().getColor(mouseX, mouseY);
     }
 
+    public boolean getUndoneStatus(){ return isUndone;}
 
 
+    public void notSaved() {
+        isSaved = false;
+    }
 
+    public void saved() {
+        isSaved = true;
+    }
+
+    public boolean getSaveStatus() {
+        return isSaved;
+    }
 }

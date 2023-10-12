@@ -10,6 +10,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -66,6 +67,7 @@ public class Painter extends Application {
     // Labels
     Label shapeText;
     Label pickerXY;
+    Label lineType;
     // ImageView
     ImageView imageV;
     // Shapes
@@ -93,9 +95,9 @@ public class Painter extends Application {
     private MenuItem redo;
     private MenuItem notes;
     private MenuItem about;
-    private MenuItem thinW;
-    private MenuItem defW;
-    private MenuItem thickW;
+    private MenuItem solidLine;
+    private MenuItem dashLine;
+    private MenuItem dotLine;
 
     // Buttons
     private ToggleButton freeDraw;
@@ -162,6 +164,7 @@ public class Painter extends Application {
         // Labels
         shapeText = new Label("Shape: None");
         pickerXY = new Label("Coordinates: " + picker[0] + ", " + picker[1]);
+        lineType = new Label(dHandler.getCurrentLineType());
 
         // ImageView
         imageV = new ImageView();
@@ -210,8 +213,7 @@ public class Painter extends Application {
         menuF = new Menu("File");
         editM = new Menu("Edit");
         helpM = new Menu("Help");
-        pMenu = new Menu("",
-                pHandler.getCurrentLine());
+        pMenu = new Menu("", lineType);
 
         // Menu Bars
         pBar = new MenuBar(pMenu);
@@ -236,12 +238,9 @@ public class Painter extends Application {
         notes = new MenuItem("Release Notes");
         about = new MenuItem("About");
 
-        thinW = new MenuItem("Thin",
-                pHandler.getLine(0));
-        defW = new MenuItem("Default",
-                pHandler.getLine(1));
-        thickW = new MenuItem("Thick",
-                pHandler.getLine(2));
+        solidLine = new MenuItem("Solid");
+        dashLine = new MenuItem("Dash");
+        dotLine = new MenuItem("Dot");
 
         // Buttons
         freeDraw = new ToggleButton("FREE");
@@ -324,9 +323,9 @@ public class Painter extends Application {
         helpM.getItems().add(notes);
         helpM.getItems().add(about);
 
-        pMenu.getItems().add(thinW);
-        pMenu.getItems().add(defW);
-        pMenu.getItems().add(thickW);
+        pMenu.getItems().add(solidLine);
+        pMenu.getItems().add(dashLine);
+        pMenu.getItems().add(dotLine);
 
         triangleSelect.setToggleGroup(shapeSelect);
         circleSelect.setToggleGroup(shapeSelect);
@@ -363,7 +362,8 @@ public class Painter extends Application {
         )));
 
         freeVBox.getChildren().addAll(
-                new Label("Brush Shape")
+                new Label("Brush Shape",
+                        pBar)
         );
 
         lineVBox.getChildren().addAll(
@@ -464,14 +464,14 @@ public class Painter extends Application {
                 ".jpg")));
 
         // Initialize Temp Files
-        this.newTempFiles(canvas, tempDir, tempImage, iHandler);
+        iHandler.newTempFiles(canvas, tempDir, tempImage);
 
         // Actions
         // OPEN image
         openI.setOnAction(
                 aE -> {
                     //Open Image
-                    File openFile = openImage(stage);
+                    File openFile = ImageHandler.openImage(stage);
                     String openFilePath = openFile.getAbsolutePath();
                     System.out.println("DEBUG -- Opening " + openFilePath + "...");
 
@@ -521,10 +521,11 @@ public class Painter extends Application {
 
                     try{
                         assert tempFile != null;
-                        newTempFiles(canvas, tempDir, tempFile, iHandler);
+                        iHandler.newTempFiles(canvas, tempDir, tempFile);
                     } catch (IOException ex){
                         ex.printStackTrace();
                     }
+                    iHandler.notSaved();
                 }
         );
         // Save Image
@@ -536,18 +537,21 @@ public class Painter extends Application {
                             iFile.getName().lastIndexOf('.') + 1);
                     System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
                     if (iFile == null){
-                        File file = saveImage(stage, new File ("Images"));
+                        //File file = saveImage(stage, new File ("Images"));
+                        File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
 
                         System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                        saveImageAs(canvas, file);
+                        ImageHandler.saveImageAs(canvas, file);
                     }
                     else {
                         System.out.println("DEBUG -- SAVING...");
-                        saveImageAs(canvas, iFile);
+                        //saveImageAs(canvas, iFile);
+                        ImageHandler.saveImageAs(canvas, iFile);
 
 
                     }
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
+                    iHandler.saved();
 
                 }
         );
@@ -558,7 +562,8 @@ public class Painter extends Application {
         saveIAs.setOnAction(
                 aE -> {
 
-                    File file = saveImage(stage, new File(workdir.toString()));
+                    //File file = saveImage(stage, new File(workdir.toString()));
+                    File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
                     if (file == null) {
                         try {
                             Files.createFile(file.toPath());
@@ -567,10 +572,11 @@ public class Painter extends Application {
                         }
                     }
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                    saveImageAs(canvas, file);
+                    ImageHandler.saveImageAs(canvas, file);
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
 
 
+                    iHandler.saved();
 
                 });
 
@@ -578,6 +584,7 @@ public class Painter extends Application {
         closeI.setOnAction(
                 aE -> {
                     // Close Image and clear canvas
+
                     iHandler.closeImage();
                     FXC.clearRect(0,
                             0,
@@ -585,7 +592,7 @@ public class Painter extends Application {
                             canvas.getHeight());
 
                     try {
-                        clearTempFiles(tempDir);
+                        iHandler.clearTempFiles(tempDir);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -596,7 +603,11 @@ public class Painter extends Application {
         // EXIT program
         exit.setOnAction(
                 aE -> {
-                    closePaint(iHandler, tempDir);
+                    if (iHandler.getSaveStatus()) {
+                        closePaint(iHandler, tempDir);
+                    } else {
+                        saveWarning(stage);
+                    }
                 }
         );
 
@@ -604,14 +615,14 @@ public class Painter extends Application {
         // TODO Modify Drawing to erase temp files when redo + new draw (delete temp files AND pop off tempImage list
         undo.setOnAction(
                 aE -> {
-                    undo();
+                    canvas = iHandler.undo(canvas);
                 }
         );
 
         // Redo action
         redo.setOnAction(
                 aE -> {
-                    redo();
+                    canvas = iHandler.redo(canvas);
 
             }
         );
@@ -644,6 +655,7 @@ public class Painter extends Application {
         // Button Items
         freeDraw.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setDrawType(DrawType.FREE);
 
                     //vBRoot.getChildren().set(3, FLSRoot);
@@ -653,6 +665,7 @@ public class Painter extends Application {
         );
         lineDraw.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setDrawType(DrawType.LINE);
 
                     //vBRoot.getChildren().set(3, FLSRoot);
@@ -661,6 +674,7 @@ public class Painter extends Application {
         );
         shapes.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setDrawType(DrawType.SHAPE);
 
                     FLSRoot.getChildren().set(1, shapesVBox);
@@ -694,73 +708,27 @@ public class Painter extends Application {
         // Line Selection
 
         pMenu.setOnAction(
-                aE -> pMenu.setGraphic(pHandler.getMenuLine())
+                aE -> pMenu.setGraphic(lineType)
 
         );
 
-        thinW.setOnAction(
+        solidLine.setOnAction(
                 aE -> {
-                    dHandler.setLineWidth(pHandler.thin);
-                    pHandler.setCurrentLine(1);
-                    textW.setText(Double.toString(dHandler.getLineWidth()));
-
-                    widthPreviewFore.setX(24);
-                    widthPreviewFore.setY(24);
-                    widthPreviewFore.setWidth(1);
-                    widthPreviewFore.setHeight(1);
-                    lineWidthSlider.setValue(1);
-
-                    Line mLine = new Line(0,
-                            10,
-                            20,
-                            10);
-                    mLine.setStroke(pHandler.getCurrentColor());
-                    mLine.setStrokeWidth(1);
-                    pMenu.setGraphic(mLine);
+                    dHandler.setLineType(LineType.SOLID);
+                    lineType.setText(dHandler.getCurrentLineType());
                 }
         );
-        defW.setOnAction(
+        dashLine.setOnAction(
                 aE -> {
-                    dHandler.setLineWidth(pHandler.def);
-                    pHandler.setCurrentLine(5);
 
-                    textW.setText(Double.toString(dHandler.getLineWidth()));
-
-                    widthPreviewFore.setX(23);
-                    widthPreviewFore.setY(23);
-                    widthPreviewFore.setWidth(5);
-                    widthPreviewFore.setHeight(5);
-                    lineWidthSlider.setValue(5);
-
-                    Line mLine = new Line(0,
-                            10,
-                            20,
-                            10);
-                    mLine.setStroke(pHandler.getCurrentColor());
-                    mLine.setStrokeWidth(5);
-                    pMenu.setGraphic(mLine);
+                    dHandler.setLineType(LineType.DASH);
+                    lineType.setText(dHandler.getCurrentLineType());
                 }
         );
-        thickW.setOnAction(
+        dotLine.setOnAction(
                 aE -> {
-                    dHandler.setLineWidth(pHandler.thick);
-                    pHandler.setCurrentLine(10);
-                    textW.setText(Double.toString(dHandler.getLineWidth()));
-
-
-                    widthPreviewFore.setX(19.5);
-                    widthPreviewFore.setY(19.5);
-                    widthPreviewFore.setWidth(10);
-                    widthPreviewFore.setHeight(10);
-                    lineWidthSlider.setValue(10);
-
-                    Line mLine = new Line(0,
-                            10,
-                            20,
-                            10);
-                    mLine.setStroke(pHandler.getCurrentColor());
-                    mLine.setStrokeWidth(10);
-                    pMenu.setGraphic(mLine);
+                    dHandler.setLineType(LineType.DOT);
+                    lineType.setText(dHandler.getCurrentLineType());
                 }
         );
         textW.setOnAction(
@@ -849,6 +817,7 @@ public class Painter extends Application {
         // SHAPE selection
         triangleSelect.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setShapeType(ShapeType.TRIANGLE);
                     shapeText.setText("Shape: TRIANGLE");
 
@@ -857,6 +826,7 @@ public class Painter extends Application {
 
         circleSelect.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setShapeType(ShapeType.CIRCLE);
                     shapeText.setText("Shape: CIRCLE");
 
@@ -865,6 +835,7 @@ public class Painter extends Application {
 
         ellipseSelect.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setShapeType(ShapeType.ELLIPSE);
                     shapeText.setText("Shape: ELLIPSE");
 
@@ -873,6 +844,7 @@ public class Painter extends Application {
 
         squareSelect.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setShapeType(ShapeType.SQUARE);
                     shapeText.setText("Shape: SQUARE");
 
@@ -881,6 +853,7 @@ public class Painter extends Application {
 
         rectangleSelect.setOnAction(
                 bE -> {
+                    dHandler.resetClick();
                     dHandler.setShapeType(ShapeType.RECTANGLE);
                     shapeText.setText("Shape: RECTANGLE");
 
@@ -891,9 +864,58 @@ public class Painter extends Application {
 
         canvas.addEventHandler(MouseEvent.ANY,
                 e -> {
+//                    if (dHandler.getDrawType() == DrawType.PICKER){
+//                        picker[0] = (int) e.getX();
+//                        picker[1] = (int) e.getY();
+//                        pickerXY.setText("Coordinates: " + picker[0] + ", " + picker[1]);
+//                        pickerColor.setFill(iHandler.getPixelColor(
+//                                canvas.getGraphicsContext2D().getCanvas().snapshot(null,null),
+//                                picker[0],
+//                                picker[1]));
+//                        if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
+//
+//                            dHandler.setCurrentColor((Color) pickerColor.getFill());
+//                            pHandler.setCurrentColor(dHandler.getCurrentColor());
+//                            rgbHash.setText(pHandler.getColorRGB());
+//
+//                        }
+//                    }
+//                    else {
+//                        canvas = dHandler.draw(canvas, e, iHandler, pHandler, tempDir);
+//
+//
+//
+//                        shapeSelect.getSelectedToggle().setSelected(false);
+//                    }
+                    if (dHandler.getDrawType() != DrawType.PICKER) {
+                        iHandler.notSaved();
+
+                        if (iHandler.getUndoneStatus()
+                                && e.getEventType() != MouseEvent.MOUSE_MOVED
+                                && e.getEventType() != MouseEvent.MOUSE_ENTERED
+                                && e.getEventType() != MouseEvent.MOUSE_EXITED) {
+                            System.out.println(e.getEventType());
+                            try {
+                                iHandler.popTemp();
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                    }
+
                     FXC.setFill(pHandler.getCurrentColor());
                     FXC.setStroke(pHandler.getCurrentColor());
                     FXC.setLineWidth(dHandler.getLineWidth());
+                    if (dHandler.getLineType() == LineType.DASH){
+                        FXC.setLineDashes(50d, 30d);
+                    }
+                    else if (dHandler.getLineType() == LineType.DOT){
+                        FXC.setLineDashes(20d, 15d);
+
+                    }
+                    else{
+                        FXC.setLineDashes();
+                    }
                     switch (dHandler.getDrawType()) {
                         case FREE -> {
                             if (dHandler.isFirstClick()){
@@ -934,7 +956,7 @@ public class Painter extends Application {
                                 if (!dHandler.isFirstClick()) dHandler.click();
 
                                 try {
-                                    pushTempFile(canvas, tempDir, iHandler);
+                                    iHandler.pushTempFile(canvas, tempDir);
                                 } catch (IOException ex) {
                                     throw new RuntimeException(ex);
                                 }
@@ -948,6 +970,7 @@ public class Painter extends Application {
 
                                     dHandler.click();
                                 } else {
+
                                     FXC.setLineWidth(5);
                                     FXC.setLineWidth(dHandler.getLineWidth());
                                     FXC.setStroke(dHandler.getCurrentColor());
@@ -959,7 +982,7 @@ public class Painter extends Application {
                                     dHandler.click();
 
                                     try {
-                                        pushTempFile(canvas, tempDir, iHandler);
+                                        iHandler.pushTempFile(canvas, tempDir);
                                     } catch (IOException ex) {
                                         throw new RuntimeException(ex);
                                     }
@@ -1028,7 +1051,7 @@ public class Painter extends Application {
                                             shapeSelect.getSelectedToggle().setSelected(false);
 
                                             try {
-                                                pushTempFile(canvas, tempDir, iHandler);
+                                                iHandler.pushTempFile(canvas, tempDir);
                                             } catch (IOException ex) {
                                                 throw new RuntimeException(ex);
                                             }
@@ -1088,7 +1111,7 @@ public class Painter extends Application {
                                             shapeSelect.getSelectedToggle().setSelected(false);
 
                                             try {
-                                                pushTempFile(canvas, tempDir, iHandler);
+                                                iHandler.pushTempFile(canvas, tempDir);
                                             } catch (IOException ex) {
                                                 throw new RuntimeException(ex);
                                             }
@@ -1150,7 +1173,7 @@ public class Painter extends Application {
                                             shapeSelect.getSelectedToggle().setSelected(false);
 
                                             try {
-                                                pushTempFile(canvas, tempDir, iHandler);
+                                                iHandler.pushTempFile(canvas, tempDir);
                                             } catch (IOException ex) {
                                                 throw new RuntimeException(ex);
                                             }
@@ -1212,7 +1235,7 @@ public class Painter extends Application {
 
 
                                             try {
-                                                pushTempFile(canvas, tempDir, iHandler);
+                                                iHandler.pushTempFile(canvas, tempDir);
                                             } catch (IOException ex) {
                                                 throw new RuntimeException(ex);
                                             }
@@ -1262,7 +1285,7 @@ public class Painter extends Application {
 
 
                                             try {
-                                                pushTempFile(canvas, tempDir, iHandler);
+                                                iHandler.pushTempFile(canvas, tempDir);
                                             } catch (IOException ex) {
                                                 throw new RuntimeException(ex);
                                             }
@@ -1288,202 +1311,18 @@ public class Painter extends Application {
      * METHODS
      ****************** ***/
 
-    /* openImage
-     * Launches a FileChooser explorer for locating an image
-     * Images filtered by type
-     * @param stage
-     * @return File
-     */
-    public static File openImage(Stage stage){
-        FileChooser fChooser = new FileChooser();
-        fChooser.setTitle("Open Image");
 
-        String imageDir = "";
-        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
-        else {
-            String userDir = System.getProperty("user.home");
-            logger.info("User Directory = " + userDir);
-            File userDirF = new File(userDir);
-            if (!userDirF.canRead()) {
-                logger.info("Cannot read " + userDirF.getAbsolutePath());
-                logger.info("Trying to create folder");
-                userDirF = new File("c:/");
-            }
-
-            imageDir = userDirF.getPath() + "/Documents/Images";
-        }
-        logger.info("Initial Directory = " + imageDir);
-        File init = new File(imageDir);
-        fChooser.setInitialDirectory(init);
-        fChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("All Images", "*.*"),
-                new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
-                new FileChooser.ExtensionFilter("PNG", "*.png"),
-                new FileChooser.ExtensionFilter("BMP", "*.bmp"),
-                new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
-        );
-        File saveFile = fChooser.showOpenDialog(stage);
-        return saveFile;
-
-    }
-
-    /* saveImage
-     * Launches a FileChooser explorer for saving an Image
-     */
-    public static File saveImage(Stage stage, File initial){
-
-        FileChooser fChooser = new FileChooser();
-        fChooser.setTitle("Save Image");
-
-        String imageDir = "";
-        if (System.getProperty("os.name").equalsIgnoreCase("windows")) imageDir = "images";
-        else {
-            String userDir = System.getProperty("user.home");
-            logger.info("User Directory = " + userDir);
-            File userDirF = new File(userDir);
-            if (!userDirF.canRead()) {
-                logger.info("Cannot read " + userDirF.getAbsolutePath());
-                logger.info("Trying to create folder");
-                userDirF = new File("c:/");
-            }
-
-            imageDir = userDirF.getPath() + "/Documents/Images";
-        }
-        logger.info("Initial Directory = " + imageDir);
-        File init = new File(imageDir);
-        fChooser.setInitialDirectory(init);
-        fChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("All Images", "*.*"),
-                new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"),
-                new FileChooser.ExtensionFilter("PNG", "*.png"),
-                new FileChooser.ExtensionFilter("BMP", "*.bmp"),
-                new FileChooser.ExtensionFilter("TIFF", "*.tif", "*.tiff")
-        );
-
-        File saveFile = fChooser.showSaveDialog(stage);
-
-        if (saveFile != null) return saveFile;
-        else {
-            logger.severe("ERROR -- returned file is Null!");
-            return null;
-        }
-
-    }
-
-    public static void saveImageAs(Canvas canvas, File file){
-
-        try{
-            logger.info("SYSTEM Save Image As w/ " + file.getAbsolutePath());
-            WritableImage wImage = new WritableImage((int) canvas.getWidth(),
-                    (int) canvas.getHeight());
-            canvas.snapshot(null, wImage);
-
-            BufferedImage bImage1 = SwingFXUtils.fromFXImage(wImage, null);
-            String ext = file.getPath().substring(file.getPath().lastIndexOf(".") + 1);
-
-            BufferedImage bImage2 = bImage1;
-
-            if (ext.equals("jpg") || ext.equals("jpeg")){
-                bImage2 = new BufferedImage(
-                        bImage1.getWidth(),
-                        bImage1.getHeight(),
-                        BufferedImage.OPAQUE);
-            }
-            Graphics2D graphics = bImage2.createGraphics();
-            graphics.drawImage(bImage1, 0, 0, null);
-
-            ImageIO.write(bImage2,
-                    ext,
-                    file);
-            graphics.dispose();
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            // Error LOG
-            logger.warning("ERROR SAVING \n" + e);
-        } catch (NullPointerException ex) {
-            ex.printStackTrace();
-            // Error LOG
-            logger.warning("ERROR SAVING (NULLPOINTER \n" + ex);
-        }
-
-
-    }
 
     public void closePaint(ImageHandler iH, Path temp){
 
         try {
-            clearTemp(new File(temp.toString()), iH);
+            iHandler.clearTemp(new File(temp.toString()));
         } catch (IOException e) {
             e.printStackTrace();
         }
         Platform.exit();
     }
 
-    public void undo(){
-        // Make sure we don't accidentally erase the original temp image
-        if (iHandler.getLatestTempImage() != iHandler.getOriginalImage()) {
-            //try {
-            //    Files.delete(iHandler.getLatestTempImage().toPath());
-            //} catch (IOException e) {
-            //    e.printStackTrace();
-            //}
-            iHandler.backTempImage();
-            iHandler.setCurrentImageFile(iHandler.getLatestTempImage());
-
-
-            Image image = null;
-            try {
-                image = iHandler.getImage(iHandler.getLatestTempImage());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Set canvas to old values
-            canvas.setHeight(image.getHeight());
-            canvas.setWidth(image.getWidth());
-
-            FXC.clearRect(
-                    0, 0,
-                    canvas.getWidth(),
-                    canvas.getHeight());
-
-            FXC.drawImage(image,
-                    0,
-                    0);
-
-        }
-        else {
-            System.out.println("ERROR -- Cannot erase initial temp Image");
-        }
-    }
-
-    public void redo(){
-        iHandler.nextTempImage();
-        iHandler.setCurrentImageFile(iHandler.getLatestTempImage());
-
-
-        Image image = null;
-        try {
-            image = iHandler.getImage(iHandler.getLatestTempImage());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Set canvas to old values
-        canvas.setHeight(image.getHeight());
-        canvas.setWidth(image.getWidth());
-
-        FXC.clearRect(
-                0, 0,
-                canvas.getWidth(),
-                canvas.getHeight());
-
-        FXC.drawImage(image,
-                0,
-                0);
-    }
 
     /* aboutPop
      * Opens a new Scene with About information
@@ -1503,51 +1342,62 @@ public class Painter extends Application {
         aPop.showAndWait();
     }
 
-    public void clearTemp(File tempDir, ImageHandler iH) throws IOException {
-        iH.clearTempList();
-        File[] tempFiles = tempDir.listFiles();
-        if (tempFiles != null) {
-            for (File f: tempFiles){
-                if (f.isDirectory()) clearTemp(f);
-                else Files.delete(Paths.get(f.getPath()));
-            }
-        }
-        Files.delete(Paths.get(tempDir.getPath()));
+    public void saveWarning(Stage stage){
+        // Pop up if current image is not saved
+        Stage sPop = new Stage();
+        sPop.setTitle("WARNING");
+
+        VBox root = new VBox();
+        Label warning = new Label("WARNING!\n-------\nYou are about to exit without saving!");
+        HBox options = new HBox();
+
+        Button sQuit = new Button("Save and Exit");
+        Button quit = new Button("Exit Without Saving");
+        Button canc = new Button("Cancel");
+
+        options.getChildren().addAll(sQuit, quit, canc);
+
+        root.getChildren().addAll(warning, options);
+
+        sQuit.setOnAction(
+                sA -> {
+                    File iFile = iHandler.getOpenImage();
+
+                    String fType = iFile.getName().substring(
+                            iFile.getName().lastIndexOf('.') + 1);
+                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
+                    if (iFile == null){
+                        File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
+
+                        System.out.println("DEBUG -- RUNNING SAVE IMAGE");
+                        ImageHandler.saveImageAs(canvas, file);
+                    }
+                    else {
+                        System.out.println("DEBUG -- SAVING...");
+                        //saveImageAs(canvas, iFile);
+                        ImageHandler.saveImageAs(canvas, iFile);
+
+
+                    }
+                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
+                    closePaint(iHandler, tempDir);
+                }
+        );
+
+        quit.setOnAction(
+                qA -> closePaint(iHandler, tempDir)
+        );
+
+        canc.setOnAction(
+                cA -> sPop.close()
+        );
+
+        Scene aScene = new Scene (root, 500, 300);
+        sPop.setScene(aScene);
+        sPop.showAndWait();
     }
 
-    public void clearTemp(File tempDir) throws IOException {
 
-        Files.delete(Paths.get(tempDir.getPath()));
-    }
-
-    public void newTempFiles(Canvas c, Path d, File f, ImageHandler iH) throws IOException {
-        clearTempFiles(d);
-        System.out.println(f.getAbsolutePath());
-        iH.newTempList(f);
-        saveImageAs(c, iH.getOriginalImage());
-    }
-
-    public void pushTempFile(Canvas c, Path d, ImageHandler iH) throws IOException {
-        File f = new File(String.valueOf(Files.createTempFile(
-                d,
-                null,
-                iH.getOriginalImage().getPath().substring(
-                        iH.getOriginalImage().getPath().lastIndexOf(".")
-                ))));
-        iH.addTempImage(f);
-        saveImageAs(c, f);
-    }
-
-    public void clearTempFiles(Path d) throws IOException {
-        File tempDir = new File(d.toString());
-        File[] tempFiles = tempDir.listFiles();
-        if (tempFiles != null) {
-            for (File f: tempFiles){
-                if (f.isDirectory()) clearTempFiles(f.toPath());
-                else Files.delete(Paths.get(f.getPath()));
-            }
-        }
-    }
 
     /* main method
      * launches Pain(T)
