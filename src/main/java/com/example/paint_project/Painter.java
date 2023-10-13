@@ -132,7 +132,8 @@ public class Painter extends Application {
     private GridPane buttonGrid;
     GridPane shapeGrid;
     BorderPane borderRoot;
-    ScrollPane canvasPane;
+    //ScrollPane canvasPane;
+    TabPane tabPane;
     // Scenes
     Scene baseScene;
     // GraphicsContext
@@ -298,7 +299,8 @@ public class Painter extends Application {
         buttonGrid = new GridPane();
         shapeGrid = new GridPane();
         borderRoot = new BorderPane();
-        canvasPane = new ScrollPane(canvas);
+        //canvasPane = new ScrollPane(canvas);
+        tabPane = new TabPane(new CanvasTab());
 
         // Groups
         menuB = new MenuBar(menuF, editM, helpM);
@@ -422,33 +424,38 @@ public class Painter extends Application {
         shapeGrid.add(rectangleSelect, 1, 1);
 
         // Scale Scrolling
-        canvasPane.getContent().setOnScroll(scrollEvent ->{
-            double y0 = scrollEvent.getDeltaY();
-            double cHeight = canvasPane.getContent().getBoundsInLocal().getHeight();
-            double sHeight = canvasPane.getHeight();
-            double y1 = 1;
-            if (cHeight != sHeight) y1 = (cHeight - sHeight);
-            double vVal = canvasPane.getVvalue();
-            canvasPane.setVvalue(vVal + -y0/y1);
+//        canvasPane.getContent().setOnScroll(scrollEvent ->{
+//            double y0 = scrollEvent.getDeltaY();
+//            double cHeight = canvasPane.getContent().getBoundsInLocal().getHeight();
+//            double sHeight = canvasPane.getHeight();
+//            double y1 = 1;
+//            if (cHeight != sHeight) y1 = (cHeight - sHeight);
+//            double vVal = canvasPane.getVvalue();
+//            canvasPane.setVvalue(vVal + -y0/y1);
+//
+//            double x0 = scrollEvent.getDeltaX();
+//            double cWidth = canvasPane.getContent().getBoundsInLocal().getWidth();
+//            double sWidth = canvasPane.getWidth();
+//            double x1 = 1;
+//            if (cWidth != cWidth) x1 = (cWidth - sWidth);
+//            double hVal = canvasPane.getHvalue();
+//            canvasPane.setHvalue(hVal + -x0/x1);
+//
+//        });
+//
+//        canvasPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
 
-            double x0 = scrollEvent.getDeltaX();
-            double cWidth = canvasPane.getContent().getBoundsInLocal().getWidth();
-            double sWidth = canvasPane.getWidth();
-            double x1 = 1;
-            if (cWidth != cWidth) x1 = (cWidth - sWidth);
-            double hVal = canvasPane.getHvalue();
-            canvasPane.setHvalue(hVal + -x0/x1);
-
-        });
-
-        canvasPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-
-        BorderPane.setAlignment(canvasPane, Pos.TOP_LEFT);
-        BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
+        //BorderPane.setAlignment(canvasPane, Pos.TOP_LEFT);
+        //BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
+        //borderRoot.setTop(hB1);
+        //borderRoot.setCenter(canvasPane);
+        //borderRoot.setLeft(vBRoot);
+        BorderPane.setAlignment(tabPane, Pos.TOP_LEFT);
+        BorderPane.setMargin(tabPane, new Insets(20,12,12,20));
         borderRoot.setTop(hB1);
-        borderRoot.setCenter(canvasPane);
+        borderRoot.setCenter(tabPane);
         borderRoot.setLeft(vBRoot);
-
+        logger.info(tabPane.getTabs().toString());
         // Scenes
         baseScene = new Scene(borderRoot,
                 Screen.getPrimary().getVisualBounds().getWidth(),
