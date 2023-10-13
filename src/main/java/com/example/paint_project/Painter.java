@@ -51,8 +51,8 @@ public class Painter extends Application {
     // Private Variables
 
     int[] picker;
-    double canvasH;
-    double canvasW;
+    //double canvasH;
+    //double canvasW;
     // Handlers
     private ImageHandler iHandler;
     private DrawHandler dHandler;
@@ -127,11 +127,12 @@ public class Painter extends Application {
 
 
     // Canvas
-    Canvas canvas;
+    //Canvas canvas;
     // Panes
     private GridPane buttonGrid;
     GridPane shapeGrid;
     BorderPane borderRoot;
+    TabPane tabPane;
     ScrollPane canvasPane;
     // Scenes
     Scene baseScene;
@@ -150,12 +151,15 @@ public class Painter extends Application {
 
         // Variables
         picker = new int[2];
-        canvasH = 500;
-        canvasW = 500;
+//        canvasH = 500;
+//        canvasW = 500;
         // Handlers
         iHandler = new ImageHandler();
         dHandler = new DrawHandler();
         pHandler = new PaletteHandler();
+
+        // local Canvas
+        Canvas canvas = new Canvas(iHandler.getCanvas().getHeight(), iHandler.getCanvas().getWidth());
 
         // Paths
         workspace = Paths.get("Images");
@@ -181,11 +185,11 @@ public class Painter extends Application {
 
 
         // Canvas
-        canvas = new Canvas();
-
-        // Canvas Setup
-        canvas.setHeight(canvasH);
-        canvas.setWidth(canvasW);
+//        canvas = new Canvas();
+//
+//        // Canvas Setup
+//        canvas.setHeight(canvasH);
+//        canvas.setWidth(canvasW);
 
         // Shapes
         pickerColor = new Rectangle(20, 20);
@@ -298,7 +302,10 @@ public class Painter extends Application {
         buttonGrid = new GridPane();
         shapeGrid = new GridPane();
         borderRoot = new BorderPane();
-        canvasPane = new ScrollPane(canvas);
+        tabPane = new TabPane();
+        canvasPane = new ScrollPane(iHandler.getCanvas());
+
+        // Tabs
 
         // Groups
         menuB = new MenuBar(menuF, editM, helpM);
@@ -421,32 +428,13 @@ public class Painter extends Application {
         shapeGrid.add(ellipseSelect, 0, 1);
         shapeGrid.add(rectangleSelect, 1, 1);
 
-        // Scale Scrolling
-        canvasPane.getContent().setOnScroll(scrollEvent ->{
-            double y0 = scrollEvent.getDeltaY();
-            double cHeight = canvasPane.getContent().getBoundsInLocal().getHeight();
-            double sHeight = canvasPane.getHeight();
-            double y1 = 1;
-            if (cHeight != sHeight) y1 = (cHeight - sHeight);
-            double vVal = canvasPane.getVvalue();
-            canvasPane.setVvalue(vVal + -y0/y1);
 
-            double x0 = scrollEvent.getDeltaX();
-            double cWidth = canvasPane.getContent().getBoundsInLocal().getWidth();
-            double sWidth = canvasPane.getWidth();
-            double x1 = 1;
-            if (cWidth != cWidth) x1 = (cWidth - sWidth);
-            double hVal = canvasPane.getHvalue();
-            canvasPane.setHvalue(hVal + -x0/x1);
+        tabPane.getTabs().add(iHandler.getTab());
 
-        });
-
-        canvasPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-
-        BorderPane.setAlignment(canvasPane, Pos.TOP_LEFT);
-        BorderPane.setMargin(canvasPane, new Insets(20,12,12,20));
+        BorderPane.setAlignment(tabPane, Pos.TOP_LEFT);
+        BorderPane.setMargin(tabPane, new Insets(20,12,12,20));
         borderRoot.setTop(hB1);
-        borderRoot.setCenter(canvasPane);
+        borderRoot.setCenter(tabPane);
         borderRoot.setLeft(vBRoot);
 
         // Scenes
@@ -462,14 +450,14 @@ public class Painter extends Application {
 
 
         // GraphicsContext
-        FXC = canvas.getGraphicsContext2D();
+        FXC = iHandler.getCanvas().getGraphicsContext2D();
 
         // GraphicsContext Setup
         FXC.setFill(Color.WHITE);
         FXC.fillRect(0,
                 0,
-                canvas.getWidth(),
-                canvas.getHeight());
+                iHandler.getCanvas().getWidth(),
+                iHandler.getCanvas().getHeight());
 
         // Files
         tempImage = new File(String.valueOf(Files.createTempFile(
@@ -478,7 +466,7 @@ public class Painter extends Application {
                 ".jpg")));
 
         // Initialize Temp Files
-        iHandler.newTempFiles(canvas, tempDir, tempImage);
+        iHandler.newTempFiles(iHandler.getCanvas(), tempDir, tempImage);
 
         // Actions
         // OPEN image
@@ -505,14 +493,14 @@ public class Painter extends Application {
                     }
 
                     // Resize canvas to fit image
-                    canvas.setHeight(image.getHeight());
-                    canvas.setWidth(image.getWidth());
+                    iHandler.setCanvasHeight(image.getHeight());
+                    iHandler.setCanvasWidth(image.getWidth());
 
                     // Clear canvas
                     FXC.clearRect(
                             0,0,
-                            canvas.getWidth(),
-                            canvas.getHeight());
+                            iHandler.getCanvas().getWidth(),
+                            iHandler.getCanvas().getHeight());
 
                     FXC.drawImage(image,
                             0,
@@ -535,7 +523,7 @@ public class Painter extends Application {
 
                     try{
                         assert tempFile != null;
-                        iHandler.newTempFiles(canvas, tempDir, tempFile);
+                        iHandler.newTempFiles(iHandler.getCanvas(), tempDir, tempFile);
                     } catch (IOException ex){
                         ex.printStackTrace();
                     }
@@ -555,12 +543,12 @@ public class Painter extends Application {
                         File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
 
                         System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                        ImageHandler.saveImageAs(canvas, file);
+                        ImageHandler.saveImageAs(iHandler.getCanvas(), file);
                     }
                     else {
                         System.out.println("DEBUG -- SAVING...");
                         //saveImageAs(canvas, iFile);
-                        ImageHandler.saveImageAs(canvas, iFile);
+                        ImageHandler.saveImageAs(iHandler.getCanvas(), iFile);
 
 
                     }
@@ -576,7 +564,6 @@ public class Painter extends Application {
         saveIAs.setOnAction(
                 aE -> {
 
-                    //File file = saveImage(stage, new File(workdir.toString()));
                     File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
                     if (file == null) {
                         try {
@@ -586,7 +573,7 @@ public class Painter extends Application {
                         }
                     }
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                    ImageHandler.saveImageAs(canvas, file);
+                    ImageHandler.saveImageAs(iHandler.getCanvas(), file);
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
 
 
@@ -602,8 +589,8 @@ public class Painter extends Application {
                     iHandler.closeImage();
                     FXC.clearRect(0,
                             0,
-                            canvas.getWidth(),
-                            canvas.getHeight());
+                            iHandler.getCanvas().getWidth(),
+                            iHandler.getCanvas().getHeight());
 
                     try {
                         iHandler.clearTempFiles(tempDir);
@@ -629,14 +616,14 @@ public class Painter extends Application {
         // TODO Modify Drawing to erase temp files when redo + new draw (delete temp files AND pop off tempImage list
         undo.setOnAction(
                 aE -> {
-                    canvas = iHandler.undo(canvas);
+                    iHandler.setCanvas(iHandler.undo(iHandler.getCanvas()));
                 }
         );
 
         // Redo action
         redo.setOnAction(
                 aE -> {
-                    canvas = iHandler.redo(canvas);
+                    iHandler.setCanvas(iHandler.redo(iHandler.getCanvas()));
 
             }
         );
@@ -902,29 +889,6 @@ public class Painter extends Application {
 
         canvas.addEventHandler(MouseEvent.ANY,
                 e -> {
-//                    if (dHandler.getDrawType() == DrawType.PICKER){
-//                        picker[0] = (int) e.getX();
-//                        picker[1] = (int) e.getY();
-//                        pickerXY.setText("Coordinates: " + picker[0] + ", " + picker[1]);
-//                        pickerColor.setFill(iHandler.getPixelColor(
-//                                canvas.getGraphicsContext2D().getCanvas().snapshot(null,null),
-//                                picker[0],
-//                                picker[1]));
-//                        if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
-//
-//                            dHandler.setCurrentColor((Color) pickerColor.getFill());
-//                            pHandler.setCurrentColor(dHandler.getCurrentColor());
-//                            rgbHash.setText(pHandler.getColorRGB());
-//
-//                        }
-//                    }
-//                    else {
-//                        canvas = dHandler.draw(canvas, e, iHandler, pHandler, tempDir);
-//
-//
-//
-//                        shapeSelect.getSelectedToggle().setSelected(false);
-//                    }
                     if (dHandler.getDrawType() != DrawType.PICKER) {
                         iHandler.notSaved();
 
@@ -1525,7 +1489,7 @@ public class Painter extends Application {
                     File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
 
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                    ImageHandler.saveImageAs(canvas, file);
+                    ImageHandler.saveImageAs(iHandler.getCanvas(), file);
 
 //
 //                    File iFile = iHandler.getOpenImage();

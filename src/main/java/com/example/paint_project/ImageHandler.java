@@ -1,8 +1,11 @@
 package com.example.paint_project;
 
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
@@ -23,6 +26,10 @@ import java.util.logging.Logger;
 
 // Class for handling images in a Map
 public class ImageHandler {
+    // Canvas
+    Canvas canvas;
+    double canvasH;
+    double canvasW;
     // Flags
     private boolean isSaved;
     private boolean isPainting;
@@ -39,9 +46,47 @@ public class ImageHandler {
     private List<File> tempImagesList;
     // Currently opened image File
     File openImage;
+    private Tab canvasTab;
+
+    private ScrollPane canvasPane;
 
     // Constructors
     public ImageHandler(){
+        // Canvas
+        canvasH = 500;
+        canvasW = 500;
+        canvas = new Canvas();
+
+        // Canvas Setup
+        canvas.setHeight(canvasH);
+        canvas.setWidth(canvasW);
+
+        // Tab
+        canvasPane = new ScrollPane(this.canvas);
+
+        // Scale Scrolling
+        canvasPane.getContent().setOnScroll(scrollEvent ->{
+            double y0 = scrollEvent.getDeltaY();
+            double cHeight = canvasPane.getContent().getBoundsInLocal().getHeight();
+            double sHeight = canvasPane.getHeight();
+            double y1 = 1;
+            if (cHeight != sHeight) y1 = (cHeight - sHeight);
+            double vVal = canvasPane.getVvalue();
+            canvasPane.setVvalue(vVal + -y0/y1);
+
+            double x0 = scrollEvent.getDeltaX();
+            double cWidth = canvasPane.getContent().getBoundsInLocal().getWidth();
+            double sWidth = canvasPane.getWidth();
+            double x1 = 1;
+            if (cWidth != cWidth) x1 = (cWidth - sWidth);
+            double hVal = canvasPane.getHvalue();
+            canvasPane.setHvalue(hVal + -x0/x1);
+
+        });
+
+        canvasPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        canvasTab = new Tab("New Image", canvasPane);
+
         // Flags
         isSaved = false;
         isPainting = false;
@@ -429,7 +474,7 @@ public class ImageHandler {
 
     // SETTERS
     public void setCurrentImageFile(File f){
-        openImage = f;
+        this.openImage = f;
     }
 
     // GETTERS
@@ -439,47 +484,47 @@ public class ImageHandler {
     public Image getImage(File f) throws IOException{
         if(imageMap.containsKey(f)) {
             if (!openImagesFileList.contains(f)) openImagesFileList.add(0, f);
-            return imageMap.get(f);
+            return this.imageMap.get(f);
         }
         else {
             System.out.println("DEBUG -- Image at \"" + f.getAbsolutePath() + "\" is Not in map -- Adding to map");
             this.addImage(f);
-            return imageMap.get(f);
+            return this.imageMap.get(f);
         }
     }
 
     public List<File> getOpenImages(){
-        return openImagesFileList;
+        return this.openImagesFileList;
     }
 
     public File getCurrentImageFile(){
-        return openImage;
+        return this.openImage;
     }
 
 
     // Get the file for current Open Image
     public File getOpenImage(){
-        return openImage;
+        return this.openImage;
     }
 
     public List<File> getTempList(){
-        return tempImagesList;
+        return this.tempImagesList;
     }
 
     public File getLatestTempImage(){
         //return tempImagesList.get(tempImagesList.size() -1);
-        return tempImagesList.get(tempIterator - 1);
+        return this.tempImagesList.get(tempIterator - 1);
     }
 
     public File getNextTempImage(){
         tempIterator ++;
-        return getLatestTempImage();
+        return this.getLatestTempImage();
     }
 
     public File getOriginalImage(){
 
         try {
-            return tempImagesList.get(0);
+            return this.tempImagesList.get(0);
         }
         catch (NullPointerException e){
             e.printStackTrace();
@@ -495,18 +540,38 @@ public class ImageHandler {
         return snapshot.getPixelReader().getColor(mouseX, mouseY);
     }
 
-    public boolean getUndoneStatus(){ return isUndone;}
+    public boolean getUndoneStatus(){ return this.isUndone;}
 
 
     public void notSaved() {
-        isSaved = false;
+        this.isSaved = false;
     }
 
     public void saved() {
-        isSaved = true;
+        this.isSaved = true;
     }
 
     public boolean getSaveStatus() {
-        return isSaved;
+        return this.isSaved;
+    }
+
+    public Canvas getCanvas() {
+        return this.canvas;
+    }
+
+    public void setCanvasHeight(double height) {
+        this.canvas.setHeight(height);
+    }
+
+    public void setCanvasWidth(double width) {
+        this.canvas.setWidth(width);
+    }
+
+    public void setCanvas(Canvas undo) {
+        this.canvas = undo;
+    }
+
+    public Tab getTab() {
+        return this.canvasTab;
     }
 }
