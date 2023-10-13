@@ -2,7 +2,6 @@ package com.example.paint_project;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;  // The holy grail
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -20,7 +19,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
@@ -29,13 +27,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
-import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -68,6 +63,7 @@ public class Painter extends Application {
     Label shapeText;
     Label pickerXY;
     Label lineType;
+    Label shapeStyle;
     // ImageView
     ImageView imageV;
     // Shapes
@@ -82,9 +78,11 @@ public class Painter extends Application {
     private Menu menuF;
     private Menu editM;
     private Menu helpM;
-    private Menu pMenu;
+    private Menu lineMenu;
+    private Menu shapeMenu;
     // Menu Bar
-    private MenuBar pBar;
+    private MenuBar lineBar;
+    private MenuBar shapeBar;
     // Menu Items
     private MenuItem openI;
     private MenuItem saveI;
@@ -98,6 +96,9 @@ public class Painter extends Application {
     private MenuItem solidLine;
     private MenuItem dashLine;
     private MenuItem dotLine;
+    private MenuItem shapeFill;
+    private MenuItem shapeOutline;
+    private MenuItem shapeOutlineDash;
 
     // Buttons
     private ToggleButton freeDraw;
@@ -165,6 +166,7 @@ public class Painter extends Application {
         shapeText = new Label("Shape: None");
         pickerXY = new Label("Coordinates: " + picker[0] + ", " + picker[1]);
         lineType = new Label(dHandler.getCurrentLineType());
+        shapeStyle = new Label(dHandler.getCurrentShapeStyle());
 
         // ImageView
         imageV = new ImageView();
@@ -213,10 +215,12 @@ public class Painter extends Application {
         menuF = new Menu("File");
         editM = new Menu("Edit");
         helpM = new Menu("Help");
-        pMenu = new Menu("", lineType);
+        lineMenu = new Menu("", lineType);
+        shapeMenu = new Menu("", shapeStyle);
 
         // Menu Bars
-        pBar = new MenuBar(pMenu);
+        lineBar = new MenuBar(lineMenu);
+        shapeBar = new MenuBar(shapeMenu);
 
         // Menu Items
         openI = new MenuItem("Open Image");
@@ -241,6 +245,10 @@ public class Painter extends Application {
         solidLine = new MenuItem("Solid");
         dashLine = new MenuItem("Dash");
         dotLine = new MenuItem("Dot");
+
+        shapeFill = new MenuItem("Filled");
+        shapeOutline = new MenuItem("Outline");
+        shapeOutlineDash = new MenuItem("Dashed");
 
         // Buttons
         freeDraw = new ToggleButton("FREE");
@@ -323,9 +331,14 @@ public class Painter extends Application {
         helpM.getItems().add(notes);
         helpM.getItems().add(about);
 
-        pMenu.getItems().add(solidLine);
-        pMenu.getItems().add(dashLine);
-        pMenu.getItems().add(dotLine);
+        lineMenu.getItems().add(solidLine);
+        lineMenu.getItems().add(dashLine);
+        lineMenu.getItems().add(dotLine);
+
+        shapeMenu.getItems().addAll(shapeFill,
+                shapeOutline,
+                shapeOutlineDash);
+
 
         triangleSelect.setToggleGroup(shapeSelect);
         circleSelect.setToggleGroup(shapeSelect);
@@ -363,13 +376,14 @@ public class Painter extends Application {
 
         freeVBox.getChildren().addAll(
                 new Label("Brush Shape",
-                        pBar)
+                        lineBar)
         );
 
         lineVBox.getChildren().addAll(
-                pBar);
+                lineBar);
 
         shapesVBox.getChildren().addAll(
+                shapeBar,
                 new Label("Shape Size"),
                 shapeText,
                 shapeGrid
@@ -707,8 +721,8 @@ public class Painter extends Application {
 
         // Line Selection
 
-        pMenu.setOnAction(
-                aE -> pMenu.setGraphic(lineType)
+        lineMenu.setOnAction(
+                aE -> lineMenu.setGraphic(lineType)
 
         );
 
@@ -731,6 +745,30 @@ public class Painter extends Application {
                     lineType.setText(dHandler.getCurrentLineType());
                 }
         );
+
+        shapeFill.setOnAction(
+                aE ->{
+                    dHandler.setShapeStyle(ShapeStyle.FILLED);
+                    shapeStyle.setText(dHandler.getCurrentShapeStyle());
+                }
+        );
+        shapeOutline.setOnAction(
+                aE ->{
+                    dHandler.setShapeStyle(ShapeStyle.OUTLINE);
+                    shapeStyle.setText(dHandler.getCurrentShapeStyle());
+
+                }
+        );
+        shapeOutlineDash.setOnAction(
+                aE ->{
+                    dHandler.setShapeStyle(ShapeStyle.DASH);
+                    shapeStyle.setText(dHandler.getCurrentShapeStyle());
+
+                }
+        );
+
+
+
         textW.setOnAction(
                 aE -> {
                     char[] c = textW.getText().toCharArray();
@@ -1036,14 +1074,22 @@ public class Painter extends Application {
                                         else {
                                             dHandler.pX[2] = e.getX();
                                             dHandler.pY[2] = e.getY();
-                                            System.out.println("Point " + dHandler.getPoints() + "\n" +
-                                                    "tX = [" + dHandler.pX[0] + "," + dHandler.pX[1] + "," + dHandler.pX[2] + "]\n" +
-                                                    "tY = [" + dHandler.pY[0] + "," + dHandler.pY[1] + "," + dHandler.pY[2] + "]");
                                             FXC.setFill(dHandler.getCurrentColor());
                                             //FXC.strokePolygon(
                                             //        dHandler.pX, dHandler.pY, 3);
-                                            FXC.fillPolygon(
-                                                    dHandler.pX, dHandler.pY, 3);
+                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED) {
+                                                FXC.fillPolygon(
+                                                        dHandler.pX, dHandler.pY, 3);
+                                            }
+                                            else {
+                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH){
+                                                    FXC.setLineDashes(20);
+                                                }
+                                                FXC.strokePolygon(
+                                                        dHandler.pX,
+                                                        dHandler.pY, 3
+                                                );
+                                            }
                                             dHandler.click();
                                             dHandler.setPoints(0);
 
@@ -1098,9 +1144,20 @@ public class Painter extends Application {
                                             }
                                             if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
                                             else width = Math.max(width, (e.getY() - dHandler.pY[0]));
-                                            FXC.fillRect(
-                                                    topLX, topLY,
-                                                    width, width);
+
+                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED) {
+                                                FXC.fillRect(
+                                                        topLX, topLY,
+                                                        width, width);
+                                            }
+                                            else {
+                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH){
+                                                    FXC.setLineDashes(20);
+                                                }
+                                                FXC.strokeRect(
+                                                        topLX, topLY,
+                                                        width, width);
+                                            }
 
 
 
@@ -1160,9 +1217,19 @@ public class Painter extends Application {
                                             }
                                             if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
                                             else width = Math.max(width, (e.getY() - dHandler.pY[0]));
-                                            FXC.fillOval(
-                                                    topLX, topLY,
-                                                    width, width);
+
+                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                FXC.fillOval(
+                                                        topLX, topLY,
+                                                        width, width);
+
+                                            }
+                                            else {
+                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                FXC.strokeOval(
+                                                        topLX, topLY,
+                                                        width, width);
+                                            }
 
 
 
@@ -1204,27 +1271,74 @@ public class Painter extends Application {
                                             FXC.setFill(dHandler.getCurrentColor());
                                             if (e.getX() > dHandler.pX[0]) {
                                                 if (e.getY() > dHandler.pY[0]) {
-                                                    FXC.fillOval(
-                                                            dHandler.pX[0], dHandler.pY[0],
-                                                            e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+
+                                                        FXC.fillOval(
+                                                                dHandler.pX[0], dHandler.pY[0],
+                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeOval(
+                                                                dHandler.pX[0], dHandler.pY[0],
+                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
                                                 } else {
-                                                    FXC.fillOval(
-                                                            dHandler.pX[0], dHandler.pY[0],
-                                                            e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+
+                                                        FXC.fillOval(
+                                                                dHandler.pX[0], dHandler.pY[0],
+                                                                e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+                                                        );
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeOval(
+                                                                dHandler.pX[0], dHandler.pY[0],
+                                                                e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+                                                        );
+
+                                                    }
                                                 }
                                             } else {
                                                 if (e.getY() > dHandler.pY[0]) {
-                                                    FXC.fillOval(
-                                                            e.getX(), dHandler.pY[0],
-                                                            dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                        FXC.fillOval(
+                                                                e.getX(), dHandler.pY[0],
+                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeOval(
+                                                                e.getX(), dHandler.pY[0],
+                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
                                                 } else {
-                                                    FXC.fillOval(
-                                                            e.getX(), e.getY(),
-                                                            dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                        FXC.fillOval(
+                                                                e.getX(), e.getY(),
+                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+                                                        );
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeOval(
+                                                                e.getX(), e.getY(),
+                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+                                                        );
+
+
+                                                    }
                                                 }
 
                                             }
@@ -1254,27 +1368,74 @@ public class Painter extends Application {
                                             FXC.setFill(dHandler.getCurrentColor());
                                             if (e.getX() > dHandler.pX[0]) {
                                                 if (e.getY() > dHandler.pY[0]) {
-                                                    FXC.fillRect(
-                                                            dHandler.pX[0], dHandler.pY[0],
-                                                            e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                        FXC.fillRect(
+                                                                dHandler.pX[0], dHandler.pY[0],
+                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeRect(
+                                                                dHandler.pX[0], dHandler.pY[0],
+                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
                                                 } else {
-                                                    FXC.fillRect(
-                                                            dHandler.pX[0], e.getY(),
-                                                            e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                        FXC.fillRect(
+                                                                dHandler.pX[0], e.getY(),
+                                                                e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+                                                        );
+
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeRect(
+                                                                dHandler.pX[0], e.getY(),
+                                                                e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+                                                        );
+
+                                                    }
                                                 }
                                             } else {
                                                 if (e.getY() > dHandler.pY[0]) {
-                                                    FXC.fillRect(
-                                                            e.getX(), dHandler.pY[0],
-                                                            dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                        FXC.fillRect(
+                                                                e.getX(), dHandler.pY[0],
+                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+                                                        );
+
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeRect(
+                                                                e.getX(), dHandler.pY[0],
+                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+                                                        );
+
+                                                    }
                                                 } else {
-                                                    FXC.fillRect(
-                                                            e.getX(), e.getY(),
-                                                            dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
-                                                    );
+                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+                                                        FXC.fillRect(
+                                                                e.getX(), e.getY(),
+                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+                                                        );
+
+
+                                                    }
+                                                    else {
+                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+                                                        FXC.strokeRect(
+                                                                e.getX(), e.getY(),
+                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+                                                        );
+
+                                                    }
                                                 }
 
                                             }
@@ -1361,24 +1522,26 @@ public class Painter extends Application {
 
         sQuit.setOnAction(
                 sA -> {
-                    File iFile = iHandler.getOpenImage();
+                    File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
 
-                    String fType = iFile.getName().substring(
-                            iFile.getName().lastIndexOf('.') + 1);
-                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
-                    if (iFile == null){
-                        File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
+                    System.out.println("DEBUG -- RUNNING SAVE IMAGE");
+                    ImageHandler.saveImageAs(canvas, file);
 
-                        System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                        ImageHandler.saveImageAs(canvas, file);
-                    }
-                    else {
-                        System.out.println("DEBUG -- SAVING...");
-                        //saveImageAs(canvas, iFile);
-                        ImageHandler.saveImageAs(canvas, iFile);
-
-
-                    }
+//
+//                    File iFile = iHandler.getOpenImage();
+//
+//                    String fType = iFile.getName().substring(
+//                            iFile.getName().lastIndexOf('.') + 1);
+//                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
+//                    if (iFile == null){
+//                    }
+//                    else {
+//                        System.out.println("DEBUG -- SAVING...");
+//                        //saveImageAs(canvas, iFile);
+//                        ImageHandler.saveImageAs(canvas, iFile);
+//
+//
+//                    }
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
                     closePaint(iHandler, tempDir);
                 }
@@ -1392,7 +1555,7 @@ public class Painter extends Application {
                 cA -> sPop.close()
         );
 
-        Scene aScene = new Scene (root, 500, 300);
+        Scene aScene = new Scene (root, 350, 80);
         sPop.setScene(aScene);
         sPop.showAndWait();
     }
