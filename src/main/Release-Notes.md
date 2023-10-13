@@ -4,6 +4,64 @@ Video:
 
 Pain(T) 2.0 Release notes
 
+# 10/13/2023 Release Notes (Alpha Build 2.3.1)
+> ---   
+>
+>
+>
+>### News
+>
+> Heavy Update. Added much functionality, listen in Overview. We now have a variety of 
+> functions for shapes and a color picker. Some canvas work has been done, though we still
+> dont have a resized canvas. Fixed a LOT of known issues. Migrated a lot of the functionality
+> to the imagehandler. Main file is now Painter.java. Also introduced temp images for
+> redo and undo functionality. Also added a smart save warning upon closing an unsaved image.
+>
+> ### Overview
+>	- #### New Features
+>>  - Shapes
+>>  - Color Picker
+>>  - Undo/Redo 
+>>  - Line/Shape Outline/Dashes
+>>  - Scrolling for canvas
+>>  - Color Labeling
+>>  - Expanded Key Shortcuts
+>>  - Line width controls (manual entry and slider)
+>    - Migrated methods to other Handlers
+>    - Modified images now saved as temp files in a temporary folder
+>    - Undoing and then modifying an image now deletes all previous temp images earlier in the stack
+>    - Fixed some wonkiness with drawing lines and shapes
+>    - Added new contextual panes for the various draw options
+>    - Added some minimal Logging
+> -  #### Known Issues
+>>    - Left pane has variable width
+>>    - Dash selection for lines does not reset upon switching between Free and Line drawing
+>>    - Dash selection menu does not appear on Line context pane
+>>    - Still some issues with Saving - no default image type
+>>    - Ends of free drawn lines are very... square
+>
+>
+>---
+>## Coming Soon
+>
+> #### User Facing
+> - New Shape creation (Hexagon?)
+> - Better editing tools
+>> - Eraser tool
+>> - Selection
+>> - Rotation
+>> - Movement
+>> - Copy
+>> - Paste
+> - Tabs for multiple canvases
+> - Text Functionality
+> - New image Functionality
+>
+>
+>
+> #### Back-End
+> - Incorporate Threading and more Logging
+>
 
 # 9/15/2023 Release Notes (Alpha Build 2.1.1)
 > ---   
