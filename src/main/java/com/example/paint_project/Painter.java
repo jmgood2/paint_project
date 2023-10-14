@@ -294,7 +294,9 @@ public class Painter extends Application {
         shapeGrid = new GridPane();
         borderRoot = new BorderPane();
         //canvasPane = new ScrollPane(canvas);
-        tabPane = (CanvasTabPane) new TabPane(new CanvasTab(workspace));
+        CanvasTab initTab = new CanvasTab(workspace);
+        tabPane = new CanvasTabPane();
+        tabPane.getTabs().add(initTab);
 
         // Groups
         menuB = new MenuBar(menuF, editM, helpM);
@@ -489,7 +491,8 @@ public class Painter extends Application {
                     // TODO Opening a new image should create a new canvasTab with that image
                     //Open Image
                     File openFile = ImageHandler.openImage(stage);
-                    tabPane.getTabs().add(new CanvasTab(workspace, openFile));
+
+                    tabPane.getTabs().add(this.createTab(openFile));
                     //String openFilePath = openFile.getAbsolutePath();
                     //System.out.println("DEBUG -- Opening " + openFilePath + "...");
 
@@ -916,120 +919,123 @@ public class Painter extends Application {
 
                     if (dHandler.getDrawType() != DrawType.PICKER) {
                         tabPane.getCurrentTab().pop(e);
-//                        iHandler.notSaved();
-//
-//                        if (iHandler.getUndoneStatus()
-//                                && e.getEventType() != MouseEvent.MOUSE_MOVED
-//                                && e.getEventType() != MouseEvent.MOUSE_ENTERED
-//                                && e.getEventType() != MouseEvent.MOUSE_EXITED) {
-//                            System.out.println(e.getEventType());
-//                            try {
-//                                iHandler.popTemp();
-//                            } catch (IOException ex) {
-//                                throw new RuntimeException(ex);
-//                            }
-//                        }
-                    }
+                        tabPane.getCurrentTab().setGFX(pHandler.getCurrentColor(), dHandler);
+                        iHandler.notSaved();
 
-                    FXC.setFill(pHandler.getCurrentColor());
-                    FXC.setStroke(pHandler.getCurrentColor());
-                    FXC.setLineWidth(dHandler.getLineWidth());
-                    if (dHandler.getLineType() == LineType.DASH){
-                        FXC.setLineDashes(50d, 30d);
-                    }
-                    else if (dHandler.getLineType() == LineType.DOT){
-                        FXC.setLineDashes(20d, 15d);
-
-                    }
-                    else{
-                        FXC.setLineDashes();
-                    }
-                    switch (dHandler.getDrawType()) {
-                        case FREE -> {
-                            if (dHandler.isFirstClick()){
-                                FXC.beginPath();
-                                dHandler.click();
-                            }
-                            //System.out.println("FREE");
-                            if (e.getEventType() == MouseEvent.MOUSE_DRAGGED) {
-                                if (e.isPrimaryButtonDown()) {
-                                    /*FXC.setFill(dHandler.getCurrentColor());
-                                    FXC.fillRect(e.getX() - 3,
-                                            e.getY() - 3,
-                                            5,
-                                            5);*/
-                                    //FXC.beginPath();
-                                    FXC.lineTo(e.getX(), e.getY());
-                                    FXC.stroke();
-
-
-
-                                } else if (e.isSecondaryButtonDown()) {
-
-                                    FXC.clearRect(e.getX() - 3,
-                                            e.getY() - 3,
-                                            5,
-                                            5);
-
-                                }
-                                //try {
-                                //    pushTempFile(canvas, tempDir, iHandler);
-                                //} catch (IOException ex) {
-                                //    throw new RuntimeException(ex);
-                                //}
-                            } else if (e.getEventType() == MouseEvent.MOUSE_RELEASED){
-                                FXC.beginPath();
-                                FXC.moveTo(e.getX(), e.getY());
-                                FXC.stroke();
-                                if (!dHandler.isFirstClick()) dHandler.click();
-
-                                try {
-                                    iHandler.pushTempFile(canvas, tempDir);
-                                } catch (IOException ex) {
-                                    throw new RuntimeException(ex);
-                                }
+                        if (iHandler.getUndoneStatus()
+                                && e.getEventType() != MouseEvent.MOUSE_MOVED
+                                && e.getEventType() != MouseEvent.MOUSE_ENTERED
+                                && e.getEventType() != MouseEvent.MOUSE_EXITED) {
+                            System.out.println(e.getEventType());
+                            try {
+                                iHandler.popTemp();
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
                             }
                         }
+                    }
+
+//                    FXC.setFill(pHandler.getCurrentColor());
+//                    FXC.setStroke(pHandler.getCurrentColor());
+//                    FXC.setLineWidth(dHandler.getLineWidth());
+//                    if (dHandler.getLineType() == LineType.DASH){
+//                        FXC.setLineDashes(50d, 30d);
+//                    }
+//                    else if (dHandler.getLineType() == LineType.DOT){
+//                        FXC.setLineDashes(20d, 15d);
+//
+//                    }
+//                    else{
+//                        FXC.setLineDashes();
+//                    }
+                    switch (dHandler.getDrawType()) {
+                        case FREE -> {
+                            dHandler = tabPane.getCurrentTab().drawFree(e, dHandler);
+//
+////                            //System.out.println("FREE");
+////                            if (e.getEventType() == MouseEvent.MOUSE_DRAGGED) {
+////                                if (e.isPrimaryButtonDown()) {
+////                                    /*FXC.setFill(dHandler.getCurrentColor());
+////                                    FXC.fillRect(e.getX() - 3,
+////                                            e.getY() - 3,
+////                                            5,
+////                                            5);*/
+////                                    //FXC.beginPath();
+////                                    FXC.lineTo(e.getX(), e.getY());
+////                                    FXC.stroke();
+////
+////
+////
+////                                } else if (e.isSecondaryButtonDown()) {
+////
+////                                    FXC.clearRect(e.getX() - 3,
+////                                            e.getY() - 3,
+////                                            5,
+////                                            5);
+////
+////                                }
+////                                //try {
+////                                //    pushTempFile(canvas, tempDir, iHandler);
+////                                //} catch (IOException ex) {
+////                                //    throw new RuntimeException(ex);
+////                                //}
+////                            } else if (e.getEventType() == MouseEvent.MOUSE_RELEASED){
+////                                FXC.beginPath();
+////                                FXC.moveTo(e.getX(), e.getY());
+////                                FXC.stroke();
+////                                if (!dHandler.isFirstClick()) dHandler.click();
+////
+////                                try {
+////                                    iHandler.pushTempFile(canvas, tempDir);
+////                                } catch (IOException ex) {
+////                                    throw new RuntimeException(ex);
+////                                }
+////                            }
+                        }
                         case LINE -> {
-                            if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
-                                if (dHandler.isFirstClick()) {
-                                    dHandler.setPosA(e.getX(),
-                                            e.getY());
+                            dHandler = tabPane.getCurrentTab().drawLine(e, dHandler);
 
-                                    dHandler.click();
-                                } else {
-
-                                    FXC.setLineWidth(5);
-                                    FXC.setLineWidth(dHandler.getLineWidth());
-                                    FXC.setStroke(dHandler.getCurrentColor());
-                                    FXC.strokeLine(dHandler.getPosAX(),
-                                            dHandler.getPosAY(),
-                                            e.getX(),
-                                            e.getY());
-                                    dHandler.setPosA(0, 0);
-                                    dHandler.click();
-
-                                    try {
-                                        iHandler.pushTempFile(canvas, tempDir);
-                                    } catch (IOException ex) {
-                                        throw new RuntimeException(ex);
-                                    }
-
-
-                                }
-
-
-                            }
+////                            if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+////                                if (dHandler.isFirstClick()) {
+////                                    dHandler.setPosA(e.getX(),
+////                                            e.getY());
+////
+////                                    dHandler.click();
+////                                } else {
+////
+////                                    FXC.setLineWidth(5);
+////                                    FXC.setLineWidth(dHandler.getLineWidth());
+////                                    FXC.setStroke(dHandler.getCurrentColor());
+////                                    FXC.strokeLine(dHandler.getPosAX(),
+////                                            dHandler.getPosAY(),
+////                                            e.getX(),
+////                                            e.getY());
+////                                    dHandler.setPosA(0, 0);
+////                                    dHandler.click();
+////
+////                                    try {
+////                                        iHandler.pushTempFile(canvas, tempDir);
+////                                    } catch (IOException ex) {
+////                                        throw new RuntimeException(ex);
+////                                    }
+////
+////
+////                                }
+////
+////
+////                            }
                         }
                         case PICKER -> {
                             picker[0] = (int) e.getX();
                             picker[1] = (int) e.getY();
                             pickerXY.setText("Coordinates: " + picker[0] + ", " + picker[1]);
                             pickerColor.setFill(iHandler.getPixelColor(
-                                    canvas.getGraphicsContext2D().getCanvas().snapshot(null,null),
+                                    tabPane.getCurrentTab().getCanvas().
+                                            getGraphicsContext2D().getCanvas().snapshot(
+                                                    null, null),
                                     picker[0],
                                     picker[1]));
-                            if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
+                            if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
 
                                 dHandler.setCurrentColor((Color) pickerColor.getFill());
                                 pHandler.setCurrentColor(dHandler.getCurrentColor());
@@ -1040,421 +1046,430 @@ public class Painter extends Application {
                         case SHAPE -> {
                             // TODO add preview of shape as it is being drawn
                             // TODO add orientation options
+                            dHandler = tabPane.getCurrentTab().drawShape(e, dHandler);
+
+                            if (dHandler.getShapeType() == ShapeType.NONE)
+                                shapeSelect.getSelectedToggle().setSelected(false);
+
+//                           switch (dHandler.getShapeType()){
+//                                case TRIANGLE -> {
+//
+//
+//                                    if (dHandler.isFirstClick()){
+//                                        dHandler.setPoints(1);
+//                                        dHandler.click();
+//
+//                                    }
+//
+//                                    if(e.getEventType() == MouseEvent.MOUSE_CLICKED){
+//                                        System.out.println("Mouse Pressed -- points =" + dHandler.getPoints() + "/3");
+//
+//                                        if (dHandler.getPoints() < 3){ // If this is not the third click
+//                                            System.out.println("We in it now\n" +
+//                                                    e.getX() + ", " + e.getY());
+//                                            dHandler.pX[dHandler.getPoints() - 1] = e.getX();
+//                                            dHandler.pY[dHandler.getPoints() - 1] = e.getY();
+//                                            System.out.println(dHandler.getPoints());
+//                                            dHandler.setPoints(dHandler.getPoints() + 1);
+//                                            System.out.println(dHandler.getPoints());
+//                                        }
+//                                        else {
+//                                            dHandler.pX[2] = e.getX();
+//                                            dHandler.pY[2] = e.getY();
+//                                            FXC.setFill(dHandler.getCurrentColor());
+//                                            //FXC.strokePolygon(
+//                                            //        dHandler.pX, dHandler.pY, 3);
+//                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED) {
+//                                                FXC.fillPolygon(
+//                                                        dHandler.pX, dHandler.pY, 3);
+//                                            }
+//                                            else {
+//                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH){
+//                                                    FXC.setLineDashes(20);
+//                                                }
+//                                                FXC.strokePolygon(
+//                                                        dHandler.pX,
+//                                                        dHandler.pY, 3
+//                                                );
+//                                            }
+//                                            dHandler.click();
+//                                            dHandler.setPoints(0);
+//
+//                                            dHandler.setShapeType(ShapeType.NONE);
+//                                            shapeSelect.getSelectedToggle().setSelected(false);
+//
+//                                            try {
+//                                                iHandler.pushTempFile(canvas, tempDir);
+//                                            } catch (IOException ex) {
+//                                                throw new RuntimeException(ex);
+//                                            }
+//                                        }
+//
+//                                    }
+//                                }
+//                                case SQUARE -> {
+//                                    if(e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+//                                        if (dHandler.isFirstClick()) {
+//                                            dHandler.click();
+//                                            dHandler.pX[0] = e.getX();
+//                                            dHandler.pY[0] = e.getY();
+//
+//                                        }
+//                                        else {
+//                                            double topLX = 0;
+//                                            double topLY = 0;
+//                                            double width = 0;
+//                                            if (e.getX() > dHandler.pX[0]){ // Second click to the right of first
+//                                                width = e.getX() - dHandler.pX[0];
+//                                                topLX = dHandler.pX[0];
+//                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+//                                                    topLY = e.getY();
+//                                                }
+//                                                else{
+//                                                    topLY = dHandler.pY[0];
+//
+//                                                }
+//
+//                                            }
+//                                            else{
+//                                                width = dHandler.pX[0] - e.getX();
+//                                                topLX = e.getX();
+//
+//
+//                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+//                                                    topLY = e.getY();
+//                                                }
+//                                                else{
+//                                                    topLY = dHandler.pY[0];
+//
+//                                                }
+//                                            }
+//                                            if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
+//                                            else width = Math.max(width, (e.getY() - dHandler.pY[0]));
+//
+//                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED) {
+//                                                FXC.fillRect(
+//                                                        topLX, topLY,
+//                                                        width, width);
+//                                            }
+//                                            else {
+//                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH){
+//                                                    FXC.setLineDashes(20);
+//                                                }
+//                                                FXC.strokeRect(
+//                                                        topLX, topLY,
+//                                                        width, width);
+//                                            }
+//
+//
+//
+//
+//                                            dHandler.click();
+//
+//                                            dHandler.setShapeType(ShapeType.NONE);
+//                                            shapeSelect.getSelectedToggle().setSelected(false);
+//
+//                                            try {
+//                                                iHandler.pushTempFile(canvas, tempDir);
+//                                            } catch (IOException ex) {
+//                                                throw new RuntimeException(ex);
+//                                            }
+//
+//                                        }
+//                                    }
+//
+//                                }
+//                                case CIRCLE -> {
+//                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
+//                                        if (dHandler.isFirstClick()){
+//                                            dHandler.click();
+//                                            dHandler.pX[0] = e.getX();
+//                                            dHandler.pY[0] = e.getY();
+//
+//
+//                                        }
+//                                        else{
+//                                            double topLX = 0;
+//                                            double topLY = 0;
+//                                            double width = 0;
+//                                            if (e.getX() > dHandler.pX[0]){ // Second click to the right of first
+//                                                width = e.getX() - dHandler.pX[0];
+//                                                topLX = dHandler.pX[0];
+//                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+//                                                    topLY = e.getY();
+//                                                }
+//                                                else{
+//                                                    topLY = dHandler.pY[0];
+//
+//                                                }
+//
+//                                            }
+//                                            else{
+//                                                width = dHandler.pX[0] - e.getX();
+//                                                topLX = e.getX();
+//
+//
+//                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
+//                                                    topLY = e.getY();
+//                                                }
+//                                                else{
+//                                                    topLY = dHandler.pY[0];
+//
+//                                                }
+//                                            }
+//                                            if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
+//                                            else width = Math.max(width, (e.getY() - dHandler.pY[0]));
+//
+//                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                FXC.fillOval(
+//                                                        topLX, topLY,
+//                                                        width, width);
+//
+//                                            }
+//                                            else {
+//                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                FXC.strokeOval(
+//                                                        topLX, topLY,
+//                                                        width, width);
+//                                            }
+//
+//
+//
+//
+//                                            dHandler.click();
+//
+//                                            dHandler.setShapeType(ShapeType.NONE);
+//                                            shapeSelect.getSelectedToggle().setSelected(false);
+//
+//                                            try {
+//                                                iHandler.pushTempFile(canvas, tempDir);
+//                                            } catch (IOException ex) {
+//                                                throw new RuntimeException(ex);
+//                                            }
+//
+//
+//                                        }
+//
+//                                    }
+//                                    else if (e.getEventType() == MouseEvent.MOUSE_DRAGGED){
+//                                        if (!dHandler.isFirstClick()){
+//                                            // TODO add handling for dragging
+//
+//                                        }
+//                                        else{ // add same handling fo second click from previous section
+//
+//                                        }
+//
+//                                    }
+//                                }
+//                                case ELLIPSE -> {
+//                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+//                                        if (dHandler.isFirstClick()) {
+//                                            dHandler.click();
+//                                            dHandler.pX[0] = e.getX();
+//                                            dHandler.pY[0] = e.getY();
+//
+//                                        } else {
+//                                            FXC.setFill(dHandler.getCurrentColor());
+//                                            if (e.getX() > dHandler.pX[0]) {
+//                                                if (e.getY() > dHandler.pY[0]) {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//
+//                                                        FXC.fillOval(
+//                                                                dHandler.pX[0], dHandler.pY[0],
+//                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeOval(
+//                                                                dHandler.pX[0], dHandler.pY[0],
+//                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                } else {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//
+//                                                        FXC.fillOval(
+//                                                                dHandler.pX[0], dHandler.pY[0],
+//                                                                e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeOval(
+//                                                                dHandler.pX[0], dHandler.pY[0],
+//                                                                e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//                                                    }
+//                                                }
+//                                            } else {
+//                                                if (e.getY() > dHandler.pY[0]) {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                        FXC.fillOval(
+//                                                                e.getX(), dHandler.pY[0],
+//                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeOval(
+//                                                                e.getX(), dHandler.pY[0],
+//                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                } else {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                        FXC.fillOval(
+//                                                                e.getX(), e.getY(),
+//                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeOval(
+//                                                                e.getX(), e.getY(),
+//                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//
+//                                                    }
+//                                                }
+//
+//                                            }
+//                                            dHandler.click();
+//
+//                                            dHandler.setShapeType(ShapeType.NONE);
+//                                            shapeSelect.getSelectedToggle().setSelected(false);
+//
+//
+//                                            try {
+//                                                iHandler.pushTempFile(canvas, tempDir);
+//                                            } catch (IOException ex) {
+//                                                throw new RuntimeException(ex);
+//                                            }
+//                                        }
+//                                    }
+//
+//                                }
+//                                case RECTANGLE -> {
+//                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
+//                                        if (dHandler.isFirstClick()) {
+//                                            dHandler.click();
+//                                            dHandler.pX[0] = e.getX();
+//                                            dHandler.pY[0] = e.getY();
+//
+//                                        } else {
+//                                            FXC.setFill(dHandler.getCurrentColor());
+//                                            if (e.getX() > dHandler.pX[0]) {
+//                                                if (e.getY() > dHandler.pY[0]) {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                        FXC.fillRect(
+//                                                                dHandler.pX[0], dHandler.pY[0],
+//                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeRect(
+//                                                                dHandler.pX[0], dHandler.pY[0],
+//                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                } else {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                        FXC.fillRect(
+//                                                                dHandler.pX[0], e.getY(),
+//                                                                e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeRect(
+//                                                                dHandler.pX[0], e.getY(),
+//                                                                e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//                                                    }
+//                                                }
+//                                            } else {
+//                                                if (e.getY() > dHandler.pY[0]) {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                        FXC.fillRect(
+//                                                                e.getX(), dHandler.pY[0],
+//                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeRect(
+//                                                                e.getX(), dHandler.pY[0],
+//                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
+//                                                        );
+//
+//                                                    }
+//                                                } else {
+//                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
+//                                                        FXC.fillRect(
+//                                                                e.getX(), e.getY(),
+//                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//
+//                                                    }
+//                                                    else {
+//                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
+//                                                        FXC.strokeRect(
+//                                                                e.getX(), e.getY(),
+//                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
+//                                                        );
+//
+//                                                    }
+//                                                }
+//
+//                                            }
+//                                            dHandler.click();
+//
+//                                            dHandler.setShapeType(ShapeType.NONE);
+//                                            shapeSelect.getSelectedToggle().setSelected(false);
+//
+//
+//                                            try {
+//                                                iHandler.pushTempFile(canvas, tempDir);
+//                                            } catch (IOException ex) {
+//                                                throw new RuntimeException(ex);
+//                                            }
+//
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//
+//
+//                        default -> {
+//                        }
+//                    }
+
+                            //               });
 
-                            switch (dHandler.getShapeType()){
-                                case TRIANGLE -> {
-                                    if (dHandler.isFirstClick()){
-                                        dHandler.setPoints(1);
-                                        dHandler.click();
 
-                                    }
-
-                                    if(e.getEventType() == MouseEvent.MOUSE_CLICKED){
-                                        System.out.println("Mouse Pressed -- points =" + dHandler.getPoints() + "/3");
-
-                                        if (dHandler.getPoints() < 3){ // If this is not the third click
-                                            System.out.println("We in it now\n" +
-                                                    e.getX() + ", " + e.getY());
-                                            dHandler.pX[dHandler.getPoints() - 1] = e.getX();
-                                            dHandler.pY[dHandler.getPoints() - 1] = e.getY();
-                                            System.out.println(dHandler.getPoints());
-                                            dHandler.setPoints(dHandler.getPoints() + 1);
-                                            System.out.println(dHandler.getPoints());
-                                        }
-                                        else {
-                                            dHandler.pX[2] = e.getX();
-                                            dHandler.pY[2] = e.getY();
-                                            FXC.setFill(dHandler.getCurrentColor());
-                                            //FXC.strokePolygon(
-                                            //        dHandler.pX, dHandler.pY, 3);
-                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED) {
-                                                FXC.fillPolygon(
-                                                        dHandler.pX, dHandler.pY, 3);
-                                            }
-                                            else {
-                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH){
-                                                    FXC.setLineDashes(20);
-                                                }
-                                                FXC.strokePolygon(
-                                                        dHandler.pX,
-                                                        dHandler.pY, 3
-                                                );
-                                            }
-                                            dHandler.click();
-                                            dHandler.setPoints(0);
-
-                                            dHandler.setShapeType(ShapeType.NONE);
-                                            shapeSelect.getSelectedToggle().setSelected(false);
-
-                                            try {
-                                                iHandler.pushTempFile(canvas, tempDir);
-                                            } catch (IOException ex) {
-                                                throw new RuntimeException(ex);
-                                            }
-                                        }
-
-                                    }
-                                }
-                                case SQUARE -> {
-                                    if(e.getEventType() == MouseEvent.MOUSE_CLICKED) {
-                                        if (dHandler.isFirstClick()) {
-                                            dHandler.click();
-                                            dHandler.pX[0] = e.getX();
-                                            dHandler.pY[0] = e.getY();
-
-                                        }
-                                        else {
-                                            double topLX = 0;
-                                            double topLY = 0;
-                                            double width = 0;
-                                            if (e.getX() > dHandler.pX[0]){ // Second click to the right of first
-                                                width = e.getX() - dHandler.pX[0];
-                                                topLX = dHandler.pX[0];
-                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
-                                                    topLY = e.getY();
-                                                }
-                                                else{
-                                                    topLY = dHandler.pY[0];
-
-                                                }
-
-                                            }
-                                            else{
-                                                width = dHandler.pX[0] - e.getX();
-                                                topLX = e.getX();
-
-
-                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
-                                                    topLY = e.getY();
-                                                }
-                                                else{
-                                                    topLY = dHandler.pY[0];
-
-                                                }
-                                            }
-                                            if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
-                                            else width = Math.max(width, (e.getY() - dHandler.pY[0]));
-
-                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED) {
-                                                FXC.fillRect(
-                                                        topLX, topLY,
-                                                        width, width);
-                                            }
-                                            else {
-                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH){
-                                                    FXC.setLineDashes(20);
-                                                }
-                                                FXC.strokeRect(
-                                                        topLX, topLY,
-                                                        width, width);
-                                            }
-
-
-
-
-                                            dHandler.click();
-
-                                            dHandler.setShapeType(ShapeType.NONE);
-                                            shapeSelect.getSelectedToggle().setSelected(false);
-
-                                            try {
-                                                iHandler.pushTempFile(canvas, tempDir);
-                                            } catch (IOException ex) {
-                                                throw new RuntimeException(ex);
-                                            }
-
-                                        }
-                                    }
-
-                                }
-                                case CIRCLE -> {
-                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
-                                        if (dHandler.isFirstClick()){
-                                            dHandler.click();
-                                            dHandler.pX[0] = e.getX();
-                                            dHandler.pY[0] = e.getY();
-
-
-                                        }
-                                        else{
-                                            double topLX = 0;
-                                            double topLY = 0;
-                                            double width = 0;
-                                            if (e.getX() > dHandler.pX[0]){ // Second click to the right of first
-                                                width = e.getX() - dHandler.pX[0];
-                                                topLX = dHandler.pX[0];
-                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
-                                                    topLY = e.getY();
-                                                }
-                                                else{
-                                                    topLY = dHandler.pY[0];
-
-                                                }
-
-                                            }
-                                            else{
-                                                width = dHandler.pX[0] - e.getX();
-                                                topLX = e.getX();
-
-
-                                                if (e.getY() < dHandler.pY[0]) { //Second click is Higher than first
-                                                    topLY = e.getY();
-                                                }
-                                                else{
-                                                    topLY = dHandler.pY[0];
-
-                                                }
-                                            }
-                                            if (e.getY() < dHandler.pY[0]) width = Math.max(width, (dHandler.pY[0] - e.getY()));
-                                            else width = Math.max(width, (e.getY() - dHandler.pY[0]));
-
-                                            if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                FXC.fillOval(
-                                                        topLX, topLY,
-                                                        width, width);
-
-                                            }
-                                            else {
-                                                if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                FXC.strokeOval(
-                                                        topLX, topLY,
-                                                        width, width);
-                                            }
-
-
-
-
-                                            dHandler.click();
-
-                                            dHandler.setShapeType(ShapeType.NONE);
-                                            shapeSelect.getSelectedToggle().setSelected(false);
-
-                                            try {
-                                                iHandler.pushTempFile(canvas, tempDir);
-                                            } catch (IOException ex) {
-                                                throw new RuntimeException(ex);
-                                            }
-
-
-                                        }
-
-                                    }
-                                    else if (e.getEventType() == MouseEvent.MOUSE_DRAGGED){
-                                        if (!dHandler.isFirstClick()){
-                                            // TODO add handling for dragging
-
-                                        }
-                                        else{ // add same handling fo second click from previous section
-
-                                        }
-
-                                    }
-                                }
-                                case ELLIPSE -> {
-                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
-                                        if (dHandler.isFirstClick()) {
-                                            dHandler.click();
-                                            dHandler.pX[0] = e.getX();
-                                            dHandler.pY[0] = e.getY();
-
-                                        } else {
-                                            FXC.setFill(dHandler.getCurrentColor());
-                                            if (e.getX() > dHandler.pX[0]) {
-                                                if (e.getY() > dHandler.pY[0]) {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-
-                                                        FXC.fillOval(
-                                                                dHandler.pX[0], dHandler.pY[0],
-                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeOval(
-                                                                dHandler.pX[0], dHandler.pY[0],
-                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                } else {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-
-                                                        FXC.fillOval(
-                                                                dHandler.pX[0], dHandler.pY[0],
-                                                                e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
-                                                        );
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeOval(
-                                                                dHandler.pX[0], dHandler.pY[0],
-                                                                e.getY() - dHandler.pX[0], dHandler.pY[0] - e.getY()
-                                                        );
-
-                                                    }
-                                                }
-                                            } else {
-                                                if (e.getY() > dHandler.pY[0]) {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                        FXC.fillOval(
-                                                                e.getX(), dHandler.pY[0],
-                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeOval(
-                                                                e.getX(), dHandler.pY[0],
-                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                } else {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                        FXC.fillOval(
-                                                                e.getX(), e.getY(),
-                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
-                                                        );
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeOval(
-                                                                e.getX(), e.getY(),
-                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
-                                                        );
-
-
-                                                    }
-                                                }
-
-                                            }
-                                            dHandler.click();
-
-                                            dHandler.setShapeType(ShapeType.NONE);
-                                            shapeSelect.getSelectedToggle().setSelected(false);
-
-
-                                            try {
-                                                iHandler.pushTempFile(canvas, tempDir);
-                                            } catch (IOException ex) {
-                                                throw new RuntimeException(ex);
-                                            }
-                                        }
-                                    }
-
-                                }
-                                case RECTANGLE -> {
-                                    if (e.getEventType() == MouseEvent.MOUSE_CLICKED) {
-                                        if (dHandler.isFirstClick()) {
-                                            dHandler.click();
-                                            dHandler.pX[0] = e.getX();
-                                            dHandler.pY[0] = e.getY();
-
-                                        } else {
-                                            FXC.setFill(dHandler.getCurrentColor());
-                                            if (e.getX() > dHandler.pX[0]) {
-                                                if (e.getY() > dHandler.pY[0]) {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                        FXC.fillRect(
-                                                                dHandler.pX[0], dHandler.pY[0],
-                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeRect(
-                                                                dHandler.pX[0], dHandler.pY[0],
-                                                                e.getX() - dHandler.pX[0], e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                } else {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                        FXC.fillRect(
-                                                                dHandler.pX[0], e.getY(),
-                                                                e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
-                                                        );
-
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeRect(
-                                                                dHandler.pX[0], e.getY(),
-                                                                e.getX() - dHandler.pX[0], dHandler.pY[0] - e.getY()
-                                                        );
-
-                                                    }
-                                                }
-                                            } else {
-                                                if (e.getY() > dHandler.pY[0]) {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                        FXC.fillRect(
-                                                                e.getX(), dHandler.pY[0],
-                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
-                                                        );
-
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeRect(
-                                                                e.getX(), dHandler.pY[0],
-                                                                dHandler.pX[0] - e.getX(), e.getY() - dHandler.pY[0]
-                                                        );
-
-                                                    }
-                                                } else {
-                                                    if (dHandler.getShapeStyle() == ShapeStyle.FILLED){
-                                                        FXC.fillRect(
-                                                                e.getX(), e.getY(),
-                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
-                                                        );
-
-
-                                                    }
-                                                    else {
-                                                        if (dHandler.getShapeStyle() == ShapeStyle.DASH) FXC.setLineDashes(20);;
-                                                        FXC.strokeRect(
-                                                                e.getX(), e.getY(),
-                                                                dHandler.pX[0] - e.getX(), dHandler.pY[0] - e.getY()
-                                                        );
-
-                                                    }
-                                                }
-
-                                            }
-                                            dHandler.click();
-
-                                            dHandler.setShapeType(ShapeType.NONE);
-                                            shapeSelect.getSelectedToggle().setSelected(false);
-
-
-                                            try {
-                                                iHandler.pushTempFile(canvas, tempDir);
-                                            } catch (IOException ex) {
-                                                throw new RuntimeException(ex);
-                                            }
-
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-
-                        default -> {
                         }
                     }
-
                 });
-
-
     }
 
 
@@ -1465,12 +1480,9 @@ public class Painter extends Application {
 
 
     public void closePaint(ImageHandler iH, Path temp){
+        // TODO Close ALL tabs and related temp files
+        tabPane.getCurrentTab().closeTab();
 
-        try {
-            iHandler.clearTemp(new File(temp.toString()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         Platform.exit();
     }
 
@@ -1515,7 +1527,8 @@ public class Painter extends Application {
                     File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
 
                     System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                    ImageHandler.saveImageAs(canvas, file);
+                    //ImageHandler.saveImageAs(canvas, file);
+                    tabPane.getCurrentTab().saveCanvasAs(stage);
 
 //
 //                    File iFile = iHandler.getOpenImage();
@@ -1548,6 +1561,12 @@ public class Painter extends Application {
         Scene aScene = new Scene (root, 350, 80);
         sPop.setScene(aScene);
         sPop.showAndWait();
+    }
+
+    public CanvasTab createTab(File oFile) {
+        CanvasTab cTab = new CanvasTab(workspace, oFile);
+
+        return cTab;
     }
 
 

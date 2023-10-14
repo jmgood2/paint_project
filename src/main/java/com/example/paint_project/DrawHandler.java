@@ -179,6 +179,8 @@ public class DrawHandler {
         points = p;
     }
 
+    public void setFirstClick(boolean f){ firstClick = f; }
+
     public String getCurrentShapeStyle() {
         switch (this.getShapeStyle()){
             case FILLED -> {

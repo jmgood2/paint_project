@@ -318,6 +318,7 @@ public class ImageHandler {
 
         try{
             logger.info("SYSTEM Save Image As w/ " + file.getAbsolutePath());
+            logger.info("Canvas Height = " + canvas.getHeight() + " Width = " + canvas.getWidth());
             WritableImage wImage = new WritableImage((int) canvas.getWidth(),
                     (int) canvas.getHeight());
             canvas.snapshot(null, wImage);
