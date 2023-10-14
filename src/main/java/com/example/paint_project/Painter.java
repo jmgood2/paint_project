@@ -7,17 +7,13 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
@@ -32,8 +28,6 @@ import javafx.stage.Stage;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,7 +108,7 @@ public class Painter extends Application {
     // Groups
     private MenuBar menuB;
     private ToggleGroup buttons;
-    VBox vB1;
+    VBox colorVBox;
     private Group widthPreviewRoot;
     VBox freeVBox;
     VBox lineVBox;
@@ -127,17 +121,17 @@ public class Painter extends Application {
 
 
     // Canvas
-    Canvas canvas;
+    //Canvas canvas;
     // Panes
     private GridPane buttonGrid;
     GridPane shapeGrid;
     BorderPane borderRoot;
     //ScrollPane canvasPane;
-    TabPane tabPane;
+    CanvasTabPane tabPane;
     // Scenes
     Scene baseScene;
     // GraphicsContext
-    GraphicsContext FXC;
+    //GraphicsContext FXC;
     // Files
     File tempImage;
 
@@ -182,11 +176,11 @@ public class Painter extends Application {
 
 
         // Canvas
-        canvas = new Canvas();
+        //canvas = new Canvas();
 
         // Canvas Setup
-        canvas.setHeight(canvasH);
-        canvas.setWidth(canvasW);
+        //canvas.setHeight(canvasH);
+        //canvas.setWidth(canvasW);
 
         // Shapes
         pickerColor = new Rectangle(20, 20);
@@ -300,12 +294,12 @@ public class Painter extends Application {
         shapeGrid = new GridPane();
         borderRoot = new BorderPane();
         //canvasPane = new ScrollPane(canvas);
-        tabPane = new TabPane(new CanvasTab());
+        tabPane = (CanvasTabPane) new TabPane(new CanvasTab(workspace));
 
         // Groups
         menuB = new MenuBar(menuF, editM, helpM);
         buttons = new ToggleGroup();
-        vB1 = new VBox(5);
+        colorVBox = new VBox(5);
         widthPreviewRoot = new Group(widthPreviewBack, widthPreviewFore);
         freeVBox = new VBox();
         lineVBox = new VBox();
@@ -316,7 +310,7 @@ public class Painter extends Application {
                 new HBox(lineWidthSlider,
                         new VBox(widthPreviewRoot, textW)),
                 freeVBox);
-        vBRoot = new VBox(buttonGrid, vB1, FLSRoot);
+        vBRoot = new VBox(buttonGrid, colorVBox, FLSRoot);
         hB1 = new HBox(menuB);
 
         // Group Assignments
@@ -356,20 +350,20 @@ public class Painter extends Application {
 
         // VBoxes
         /// Color Palette
-        vB1.setAlignment(Pos.CENTER);
-        vB1.setPadding(new Insets(10));
+        colorVBox.setAlignment(Pos.CENTER);
+        colorVBox.setPadding(new Insets(10));
         for (int i = 0; i < 8; i = i+2){
             //vB1.getChildren().add(pHandler.getRect(i));
             // Add rows of 2 colors x 4
             HBox h = new HBox(pHandler.getRect(i),
                     pHandler.getRect(i+1));
             h.setAlignment(Pos.CENTER);
-            vB1.getChildren().add(h);
+            colorVBox.getChildren().add(h);
         }
-        vB1.getChildren().add(pHandler.getCurrentColorRect());
+        colorVBox.getChildren().add(pHandler.getCurrentColorRect());
         Label rgbHash = new Label(pHandler.getColorRGB());
-        vB1.getChildren().add(rgbHash);
-        vB1.setBorder(new Border(new BorderStroke(
+        colorVBox.getChildren().add(rgbHash);
+        colorVBox.setBorder(new Border(new BorderStroke(
                 Color.BLACK,
                 BorderStrokeStyle.SOLID,
                 new CornerRadii(2),
@@ -468,111 +462,116 @@ public class Painter extends Application {
         stage.show();
 
 
-        // GraphicsContext
-        FXC = canvas.getGraphicsContext2D();
+//        // GraphicsContext
+//        FXC = canvas.getGraphicsContext2D();
+//
+//        // GraphicsContext Setup
+//        FXC.setFill(Color.WHITE);
+//        FXC.fillRect(0,
+//                0,
+//                canvas.getWidth(),
+//                canvas.getHeight());
 
-        // GraphicsContext Setup
-        FXC.setFill(Color.WHITE);
-        FXC.fillRect(0,
-                0,
-                canvas.getWidth(),
-                canvas.getHeight());
-
-        // Files
-        tempImage = new File(String.valueOf(Files.createTempFile(
-                tempDir,
-                null,
-                ".jpg")));
+//        // Files
+//        tempImage = new File(String.valueOf(Files.createTempFile(
+//                tempDir,
+//                null,
+//                ".jpg")));
 
         // Initialize Temp Files
-        iHandler.newTempFiles(canvas, tempDir, tempImage);
+        //iHandler.newTempFiles(canvas, tempDir, tempImage);
+
 
         // Actions
         // OPEN image
         openI.setOnAction(
                 aE -> {
+                    // TODO Opening a new image should create a new canvasTab with that image
                     //Open Image
                     File openFile = ImageHandler.openImage(stage);
-                    String openFilePath = openFile.getAbsolutePath();
-                    System.out.println("DEBUG -- Opening " + openFilePath + "...");
+                    tabPane.getTabs().add(new CanvasTab(workspace, openFile));
+                    //String openFilePath = openFile.getAbsolutePath();
+                    //System.out.println("DEBUG -- Opening " + openFilePath + "...");
 
                     // Add opened image to Image Handler
-                    try {
-                        iHandler.addImage(openFile);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        iHandler.addImage(openFile);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
 
                     // Pull Image from file
-                    Image image = null;
-                    try {
-                        image = new Image(new FileInputStream(openFilePath));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+//                    Image image = null;
+//                    try {
+//                        image = new Image(new FileInputStream(openFilePath));
+//                    } catch (FileNotFoundException e) {
+//                        e.printStackTrace();
+//                    }
 
                     // Resize canvas to fit image
-                    canvas.setHeight(image.getHeight());
-                    canvas.setWidth(image.getWidth());
+//                    canvas.setHeight(image.getHeight());
+//                    canvas.setWidth(image.getWidth());
+//
+//                    // Clear canvas
+//                    FXC.clearRect(
+//                            0,0,
+//                            canvas.getWidth(),
+//                            canvas.getHeight());
+//
+//                    FXC.drawImage(image,
+//                            0,
+//                            0);
 
-                    // Clear canvas
-                    FXC.clearRect(
-                            0,0,
-                            canvas.getWidth(),
-                            canvas.getHeight());
-
-                    FXC.drawImage(image,
-                            0,
-                            0);
-
-                    iHandler.setCurrentImageFile(openFile);
-
-                    String extension = openFile.getPath().substring(openFile.getPath().lastIndexOf('.'));
-
-                    File tempFile = null;
-                    try{
-                        tempFile = new File(String.valueOf(
-                                Files.createTempFile(
-                                        tempDir,
-                                        null,
-                                        extension)));
-                    } catch (IOException ex){
-                        ex.printStackTrace();
-                    }
-
-                    try{
-                        assert tempFile != null;
-                        iHandler.newTempFiles(canvas, tempDir, tempFile);
-                    } catch (IOException ex){
-                        ex.printStackTrace();
-                    }
+//                    iHandler.setCurrentImageFile(openFile);
+//
+//                    String extension = openFile.getPath().substring(openFile.getPath().lastIndexOf('.'));
+//
+//                    File tempFile = null;
+//                    try{
+//                        tempFile = new File(String.valueOf(
+//                                Files.createTempFile(
+//                                        tempDir,
+//                                        null,
+//                                        extension)));
+//                    } catch (IOException ex){
+//                        ex.printStackTrace();
+//                    }
+//
+//                    try{
+//                        assert tempFile != null;
+//                        iHandler.newTempFiles(canvas, tempDir, tempFile);
+//                    } catch (IOException ex){
+//                        ex.printStackTrace();
+//                    }
                     iHandler.notSaved();
                 }
         );
         // Save Image
         saveI.setOnAction(
                 aE -> {
-                    File iFile = iHandler.getOpenImage();
-
-                    String fType = iFile.getName().substring(
-                            iFile.getName().lastIndexOf('.') + 1);
-                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
-                    if (iFile == null){
-                        //File file = saveImage(stage, new File ("Images"));
-                        File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
-
-                        System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                        ImageHandler.saveImageAs(canvas, file);
-                    }
-                    else {
-                        System.out.println("DEBUG -- SAVING...");
-                        //saveImageAs(canvas, iFile);
-                        ImageHandler.saveImageAs(canvas, iFile);
-
-
-                    }
-                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
-                    iHandler.saved();
+                    tabPane.getCurrentTab().saveCanvas(stage);
+//
+//                    File iFile = iHandler.getOpenImage();
+//
+//                    String fType = iFile.getName().substring(
+//                            iFile.getName().lastIndexOf('.') + 1);
+//                    System.out.println("DEBUG -- File extension of " + iFile.getAbsolutePath() + " is " + fType);
+//                    if (iFile == null){
+//                        //File file = saveImage(stage, new File ("Images"));
+//                        File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
+//
+//                        System.out.println("DEBUG -- RUNNING SAVE IMAGE");
+//                        ImageHandler.saveImageAs(canvas, file);
+//                    }
+//                    else {
+//                        System.out.println("DEBUG -- SAVING...");
+//                        //saveImageAs(canvas, iFile);
+//                        ImageHandler.saveImageAs(canvas, iFile);
+//
+//
+//                    }
+//                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
+//                    iHandler.saved();
 
                 }
         );
@@ -582,22 +581,23 @@ public class Painter extends Application {
         // SAVE image AS
         saveIAs.setOnAction(
                 aE -> {
-
-                    //File file = saveImage(stage, new File(workdir.toString()));
-                    File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
-                    if (file == null) {
-                        try {
-                            Files.createFile(file.toPath());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    System.out.println("DEBUG -- RUNNING SAVE IMAGE");
-                    ImageHandler.saveImageAs(canvas, file);
-                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
-
-
-                    iHandler.saved();
+                    tabPane.getCurrentTab().saveCanvasAs(stage);
+//
+//                    //File file = saveImage(stage, new File(workdir.toString()));
+//                    File file = ImageHandler.saveImage(stage, new File(workdir.toString()));
+//                    if (file == null) {
+//                        try {
+//                            Files.createFile(file.toPath());
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                    System.out.println("DEBUG -- RUNNING SAVE IMAGE");
+//                    ImageHandler.saveImageAs(canvas, file);
+//                    System.out.println("DEBUG -- RUNNING SAVE IMAGE AS");
+//
+//
+//                    iHandler.saved();
 
                 });
 
@@ -605,18 +605,21 @@ public class Painter extends Application {
         closeI.setOnAction(
                 aE -> {
                     // Close Image and clear canvas
+                    tabPane.getCurrentTab().closeImage();
+                    tabPane.getTabs().remove(tabPane.getCurrentTab());
 
-                    iHandler.closeImage();
-                    FXC.clearRect(0,
-                            0,
-                            canvas.getWidth(),
-                            canvas.getHeight());
-
-                    try {
-                        iHandler.clearTempFiles(tempDir);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//
+//                    iHandler.closeImage();
+//                    FXC.clearRect(0,
+//                            0,
+//                            canvas.getWidth(),
+//                            canvas.getHeight());
+//
+//                    try {
+//                        iHandler.clearTempFiles(tempDir);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
                 }
 
         );
@@ -624,8 +627,9 @@ public class Painter extends Application {
         // EXIT program
         exit.setOnAction(
                 aE -> {
-                    if (iHandler.getSaveStatus()) {
-                        closePaint(iHandler, tempDir);
+                    // TODO have it cycle through each open tab anad repeat this
+                    if (tabPane.getCurrentTab().getImageHandler().getSaveStatus()) {
+                        tabPane.getCurrentTab().closeTab();
                     } else {
                         saveWarning(stage);
                     }
@@ -636,15 +640,14 @@ public class Painter extends Application {
         // TODO Modify Drawing to erase temp files when redo + new draw (delete temp files AND pop off tempImage list
         undo.setOnAction(
                 aE -> {
-                    canvas = iHandler.undo(canvas);
+                    tabPane.getCurrentTab().undo();
                 }
         );
 
         // Redo action
         redo.setOnAction(
                 aE -> {
-                    canvas = iHandler.redo(canvas);
-
+                    tabPane.getCurrentTab().redo();
             }
         );
 
@@ -713,7 +716,7 @@ public class Painter extends Application {
         // Palette Items
 
         // Color Selection
-        vB1.addEventHandler(MouseEvent.MOUSE_CLICKED,
+        colorVBox.addEventHandler(MouseEvent.MOUSE_CLICKED,
                 pE -> {
                     try {
                         Rectangle target = (Rectangle) pE.getTarget();
@@ -907,45 +910,25 @@ public class Painter extends Application {
 
         // DRAWING
 
-        canvas.addEventHandler(MouseEvent.ANY,
+        tabPane.getCurrentTab().getCanvas().addEventHandler(MouseEvent.ANY,
                 e -> {
-//                    if (dHandler.getDrawType() == DrawType.PICKER){
-//                        picker[0] = (int) e.getX();
-//                        picker[1] = (int) e.getY();
-//                        pickerXY.setText("Coordinates: " + picker[0] + ", " + picker[1]);
-//                        pickerColor.setFill(iHandler.getPixelColor(
-//                                canvas.getGraphicsContext2D().getCanvas().snapshot(null,null),
-//                                picker[0],
-//                                picker[1]));
-//                        if (e.getEventType() == MouseEvent.MOUSE_CLICKED){
-//
-//                            dHandler.setCurrentColor((Color) pickerColor.getFill());
-//                            pHandler.setCurrentColor(dHandler.getCurrentColor());
-//                            rgbHash.setText(pHandler.getColorRGB());
-//
-//                        }
-//                    }
-//                    else {
-//                        canvas = dHandler.draw(canvas, e, iHandler, pHandler, tempDir);
-//
-//
-//
-//                        shapeSelect.getSelectedToggle().setSelected(false);
-//                    }
-                    if (dHandler.getDrawType() != DrawType.PICKER) {
-                        iHandler.notSaved();
 
-                        if (iHandler.getUndoneStatus()
-                                && e.getEventType() != MouseEvent.MOUSE_MOVED
-                                && e.getEventType() != MouseEvent.MOUSE_ENTERED
-                                && e.getEventType() != MouseEvent.MOUSE_EXITED) {
-                            System.out.println(e.getEventType());
-                            try {
-                                iHandler.popTemp();
-                            } catch (IOException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }
+
+                    if (dHandler.getDrawType() != DrawType.PICKER) {
+                        tabPane.getCurrentTab().pop(e);
+//                        iHandler.notSaved();
+//
+//                        if (iHandler.getUndoneStatus()
+//                                && e.getEventType() != MouseEvent.MOUSE_MOVED
+//                                && e.getEventType() != MouseEvent.MOUSE_ENTERED
+//                                && e.getEventType() != MouseEvent.MOUSE_EXITED) {
+//                            System.out.println(e.getEventType());
+//                            try {
+//                                iHandler.popTemp();
+//                            } catch (IOException ex) {
+//                                throw new RuntimeException(ex);
+//                            }
+//                        }
                     }
 
                     FXC.setFill(pHandler.getCurrentColor());
